@@ -110,7 +110,6 @@
     .desc {
       margin-top: 12px;
       font-size: 14px;
-      color: var(--text);
       opacity: 0.8;
     }
 
@@ -161,75 +160,29 @@
   <iframe id="iframe"></iframe>
 
   <script>
-    <script>
-  // ▼ 戻るボタンの挙動
-  function goBack() {
-    // ① 親ページ（Google風）内で iframe として開いている場合
-    try {
-      if (window.parent && window.parent !== window) {
-        const frame = window.parent.document.getElementById("hiddenFrame");
-        if (frame) {
-          frame.style.display = "none";
-          frame.src = "";
-          return;
-        }
-      }
-    } catch(e) {
-      // クロスドメイン回避で何もしない
-    }
-
-    // ② 通常ページとして開いた場合（履歴チェック）
-    const ref = document.referrer;
-
-    // index.html → peji.html の場合は index.html に戻す
-    if (ref.includes("index.html") || ref.endsWith("/")) {
-      location.href = "index.html";
-      return;
-    }
-
-    // ③ その他は通常の戻る
-    history.back();
-  }
-
-  // ▼ 内部 iframe を開く
-  function openSite(url) {
-    const iframe = document.getElementById("iframe");
-    document.getElementById("menu").style.display = "none";
-    iframe.style.display = "block";
-    iframe.src = url;
-  }
-
-  // ▼ テーマ切り替え
-  function toggleTheme() {
-    document.body.classList.toggle("dark");
-    const isDark = document.body.classList.contains("dark");
-
-    // ボタンテキスト変更
-    document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
-
-    // 保存
-    localStorage.setItem("theme_peji", isDark ? "dark" : "light");
-  }
-
-  // ▼ 保存テーマを適用
-  window.onload = () => {
-    const saved = localStorage.getItem("theme_peji");
-    if (saved === "dark") {
-      document.body.classList.add("dark");
-      document.querySelector(".themeBtn").textContent = "ダーク";
-    }
-  };
-</script>
-
-    // ▼ 親（Google風）画面へ戻る
+    // ▼ 戻るボタンの挙動
     function goBack() {
-      if (window.parent && window.parent.document) {
-        const frame = window.parent.document.getElementById("hiddenFrame");
-        if (frame) {
-          frame.style.display = "none";
-          frame.src = "";
+      // ① 親(Google風) iframe の中なら閉じる
+      try {
+        if (window.parent && window.parent !== window) {
+          const frame = window.parent.document.getElementById("hiddenFrame");
+          if (frame) {
+            frame.style.display = "none";
+            frame.src = "";
+            return;
+          }
         }
+      } catch (e) {}
+
+      // ② ホーム(index.html) → peji.html の場合はホームへ
+      const ref = document.referrer;
+      if (ref.includes("index.html") || ref.endsWith("/")) {
+        location.href = "index.html";
+        return;
       }
+
+      // ③ 通常の戻る
+      history.back();
     }
 
     // ▼ 内部 iframe を開く
@@ -244,15 +197,11 @@
     function toggleTheme() {
       document.body.classList.toggle("dark");
       const isDark = document.body.classList.contains("dark");
-
-      // ボタンテキスト変更
       document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
-
-      // 保存
       localStorage.setItem("theme_peji", isDark ? "dark" : "light");
     }
 
-    // ▼ 保存テーマを適用
+    // ▼ 保存テーマ適用
     window.onload = () => {
       const saved = localStorage.getItem("theme_peji");
       if (saved === "dark") {
