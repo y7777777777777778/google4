@@ -13,23 +13,42 @@
     color: #202124;
   }
 
-  /* --- ヘッダー --- */
+  /* ===============================
+        ★ 左上ナビ（強化版） ★
+     =============================== */
   header {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 14px 20px;
     font-size: 14px;
+    height: 48px;
+    align-items: center;
   }
-  header a {
-    margin-left: 15px;
+
+  .left a {
+    margin-right: 16px;
     text-decoration: none;
     color: #1f1f1f;
+    font-size: 14px;
   }
-  header a:hover {
+
+  .left a:hover {
     text-decoration: underline;
   }
 
-  /* --- メイン --- */
+  .right a {
+    margin-left: 16px;
+    text-decoration: none;
+    color: #1f1f1f;
+  }
+
+  .right a:hover {
+    text-decoration: underline;
+  }
+
+  /* ===============================
+        ★ メイン ★
+     =============================== */
   main {
     display: flex;
     flex-direction: column;
@@ -43,20 +62,28 @@
     height: 92px;
   }
 
-  /* --- 検索ボックス --- */
+  /* ===========================================
+      ★ Google本物レベル：検索バー超強化版 ★
+     =========================================== */
   .search-box {
-    margin-top: 25px;
+    margin-top: 30px;
     width: 580px;
-    max-width: 90%;
+    max-width: 92%;
     display: flex;
     align-items: center;
     border: 1px solid #dfe1e5;
     border-radius: 24px;
     padding: 6px 14px;
-    box-shadow: none;
-    transition: box-shadow 0.2s;
+    background: #fff;
+    transition: box-shadow 0.2s, border 0.2s;
   }
-  .search-box:hover,
+
+  .search-box:hover {
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+    border-color: transparent;
+  }
+
   .search-box:focus-within {
     box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
     border-color: transparent;
@@ -65,7 +92,8 @@
   .search-icon {
     width: 20px;
     opacity: 0.45;
-    margin-right: 10px;
+    margin-right: 14px;
+    margin-left: 4px;
   }
 
   .search-box input {
@@ -73,24 +101,27 @@
     border: none;
     outline: none;
     font-size: 16px;
-    padding: 8px;
+    padding: 10px 4px;
   }
 
   .icon-btn {
     background: none;
     border: none;
     cursor: pointer;
-    opacity: 0.5;
-    margin-left: 8px;
+    opacity: 0.55;
+    margin-left: 10px;
   }
   .icon-btn img {
     width: 24px;
   }
 
-  /* --- ボタン --- */
+  /* ===============================
+        ★ ボタン ★
+     =============================== */
   .btns {
     margin-top: 28px;
   }
+
   .btns button {
     font-size: 14px;
     padding: 10px 20px;
@@ -99,14 +130,17 @@
     border-radius: 4px;
     background: #f8f9fa;
     cursor: pointer;
+    transition: 0.15s;
   }
+
   .btns button:hover {
     border: 1px solid #dadce0;
-    background: #f8f9fa;
     box-shadow: 0 1px 1px rgba(0,0,0,0.1);
   }
 
-  /* --- フッター --- */
+  /* ===============================
+        ★ フッター ★
+     =============================== */
   footer {
     position: fixed;
     bottom: 0;
@@ -133,11 +167,14 @@
     margin-right: 18px;
     text-decoration: none;
   }
+
   .footer-bottom a:hover {
     text-decoration: underline;
   }
 
-  /* --- 隠しページ iframe --- */
+  /* ===============================
+        ★ 隠しページ iframe ★
+     =============================== */
   #hiddenFrame {
     display: none;
     position: fixed;
@@ -152,9 +189,15 @@
 <body>
 
 <header>
-  <a href="https://mail.google.com/">Gmail</a>
-  <a href="https://www.google.co.jp/imghp">画像</a>
-  <a href="/login.html">ログイン</a>
+  <div class="left">
+    <a href="https://about.google/">Googleについて</a>
+    <a href="https://store.google.com/">ストア</a>
+  </div>
+
+  <div class="right">
+    <a href="/login.html">ログイン</a>
+    <a href="/register.html">登録</a>
+  </div>
 </header>
 
 <main>
@@ -164,7 +207,8 @@
 
   <form onsubmit="return doSearch();">
     <div class="search-box">
-      <img class="search-icon" src="https://www.gstatic.com/images/icons/material/system/1x/search_black_24dp.png">
+      <img class="search-icon"
+        src="https://www.gstatic.com/images/icons/material/system/1x/search_black_24dp.png">
 
       <input id="q" placeholder="検索または URL を入力" autocomplete="off">
 
@@ -186,7 +230,6 @@
 
 <footer>
   <div class="footer-top">日本</div>
-
   <div class="footer-bottom">
     <div>
       <a href="https://ads.google.com/">広告</a>
