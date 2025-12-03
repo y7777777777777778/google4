@@ -60,22 +60,34 @@
       box-shadow: 0 0 6px rgba(85,99,222,0.4);
     }
 
-    button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      background: #5563DE;
-      color: #fff;
-      font-size: 16px;
-      font-weight: bold;
-      transition: 0.3s;
-    }
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  background: #5563DE;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  transition: 0.3s;
+}
 
-    button:hover {
-      background: #4050c1;
-      transform: scale(1.05);
-    }
+body.dark button {
+  background: #333;
+  color: #fff;
+  border: 1px solid #777;
+}
+
+body:not(.dark) button {
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
 
     /* テーマ切り替えボタン */
     .themeBtn {
@@ -129,12 +141,17 @@
     }
 
     // --- テーマ ---
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-      const isDark = document.body.classList.contains("dark");
-      localStorage.setItem("theme", isDark ? "dark" : "light");
-      document.querySelector(".themeBtn").textContent = isDark ? "ライト" : "ダーク";
-    }
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  const isDark = document.body.classList.contains("dark");
+
+  // テーマ保存
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+
+  // アイコン変更
+  document.querySelector(".themeBtn").textContent = isDark ? "ライト" : "ダーク";
+}
+
 
     // 起動時にテーマ適用
     (function () {
