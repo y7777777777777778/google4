@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>パスワードで開くページ</title>
+  <style>
+    :root{
+      --bg:#0b0b0b;
+      --card:#111;
+      --accent:#fff;
+      --muted:#a8a8a8;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg,#071026,#0b0b0b);
+      color:var(--accent);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+      padding:20px;
+    }
+    .card{
+      width:100%;
+      max-width:420px;
+      background:var(--card);
+      border-radius:12px;
+      padding:28px;
+      box-shadow:0 8px 24px rgba(2,6,23,.6);
+      text-align:center;
+    }
+    h1{margin:0 0 12px;font-size:20px}
+    p.lead{margin:0 0 20px;color:var(--muted);font-size:14px}
+    .input-wrap{display:flex;gap:8px;align-items:center}
+    input[type="password"]{
+      flex:1;
+      padding:10px 12px;
+      background:#0b0b0b;
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:8px;
+      color:var(--accent);
+      font-size:15px;
+      outline:none;
+    }
+    button{
+      padding:10px 14px;
+      border-radius:8px;
+      border:none;
+      background:#fff;
+      color:#000;
+      font-weight:600;
+      cursor:pointer;
+      transition:transform .08s ease;
+    }
+    button:active{transform:translateY(1px)}
+    .msg{margin-top:14px;height:18px;color:#ff8a8a;font-size:14px}
+    .hint{margin-top:10px;color:var(--muted);font-size:13px}
+    @media (max-width:480px){
+      .card{padding:20px}
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-labelledby="title">
+    <h1 id="title">パスワードを入力してください ヒント：「すみませんちょっと遅れましたー」の三文字（漢字）</h1>
+    <p class="lead">正しいパスワードを入れると <code>pejipeji.html</code> に移動します。</p>
+
+    <div class="input-wrap" aria-hidden="false">
+      <input id="pw" type="password" inputmode="text" autocomplete="off" placeholder="パスワード">
+      <button id="goBtn" aria-label="送信">開く</button>
+    </div>
+
+
+
+  <script>
+    // --- ここを変更してパスワードを設定してください ---
+    const PASSWORD = "syutaisei"; // ← 変更可
+    const TARGET = "pejipeji.html"; // リダイレクト先ファイル名
+
+    // --- 実装 ---
+    const pwInput = document.getElementById('pw');
+    const goBtn = document.getElementById('goBtn');
+    const msg = document.getElementById('msg');
+
+    function showMessage(text, ok = false) {
+      msg.textContent = text;
+      msg.style.color = ok ? "#7ef0a1" : "#ff8a8a";
+    }
+
+    function tryPassword() {
+      const val = pwInput.value || "";
+      if (!val) {
+        showMessage("パスワードを入力してください。");
+        return;
+      }
+
+      // シンプルなチェック（※クライアント側のみ）
+      if (val === PASSWORD) {
+        showMessage("パスワードOK。移動します...", true);
+        // 少しだけ待ってから移動（UX向上）
+        setTimeout(()=> {
+          // 完全に別ページへ遷移（履歴に残る）
+          window.location.href = TARGET;
+        }, 350);
+      } else {
+        showMessage("パスワードが違います。もう一度。");
+        // 入力を選択してフォーカス
+        pwInput.select();
+        pwInput.focus();
+      }
+    }
+
+    goBtn.addEventListener('click', tryPassword);
+    pwInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryPassword();
+    });
+
+    // ページ読み込み時にフォーカス
+    window.addEventListener('load', () => pwInput.focus());
+  </script>
+</body>
+</html>
