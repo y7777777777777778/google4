@@ -26,105 +26,52 @@
       border-radius: 12px;
       box-shadow: 0 0 12px #000, inset 0 0 30px #111;
     }
-    #restart, #difficultyMenu {
+    #restart {
+      display: none;
       position: absolute;
-      transform: translate(-50%, -50%);
       left: 50%;
-      background: #111;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: 2px solid #555;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: 0.2s;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 22px;
       font-size: 18px;
+      background: #111;
+      color: #fff;
+      border: 2px solid #555;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.25s;
       z-index: 10;
     }
-    #restart:hover, #difficultyMenu button:hover {
+    #restart:hover {
       background: #fff;
       color: #000;
       border-color: #aaa;
       box-shadow: 0 0 10px #fff;
     }
-    #difficultyMenu {
-      display: block;
-      top: 45%;
-      width: 300px;
-      padding: 20px;
-      border-radius: 12px;
-    }
-    #difficultyMenu button {
-      width: 80%;
-      margin: 10px auto;
-      padding: 10px;
-      background: #222;
-      border: 2px solid #444;
-      color: white;
-      font-size: 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    #restart {
-      display: none;
-      top: 50%;
-    }
   </style>
 </head>
 <body>
   <h2>横スクロールアスレチック</h2>
-  <p>スペースキーでジャンプ</p>
-
-  <!-- 難易度選択画面 -->
-  <div id="difficultyMenu">
-    <h3>難易度を選択</h3>
-    <button data-diff="easy">EASY</button>
-    <button data-diff="normal">NORMAL</button>
-    <button data-diff="hard">HARD</button>
-  </div>
+  <p>スペースキーでジャンプ。</p>
 
   <canvas id="game" width="600" height="400"></canvas>
   <button id="restart">リスタート</button>
 
-  <!-- ★ 音 -->
-  <audio id="jumpSound" src="https://cdn.jsdelivr.net/gh/napolab/sonicjump/jump.wav"></audio>
-  <audio id="deadSound" src="https://cdn.jsdelivr.net/gh/napolab/sonicjump/dead.wav"></audio>
-
   <script>
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
-
-    const jumpSound = document.getElementById("jumpSound");
-    const deadSound = document.getElementById("deadSound");
-
     const BLOCK = 40;
     const GRAVITY = 0.6;
     const JUMP = -8;
 
     let player, obstacles, particles, stars, highScore;
     let speed, level, frame, gameOver, score;
-    let difficultySpeed = 3;
-    let diffGap = 100;
 
     const restartBtn = document.getElementById("restart");
-    const difficultyMenu = document.getElementById("difficultyMenu");
-
+    restartBtn.setAttribute("tabindex", "-1");
     restartBtn.addEventListener("click", () => {
       restartBtn.style.display = "none";
       init();
-    });
-
-    difficultyMenu.querySelectorAll("button").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const diff = btn.dataset.diff;
-        if (diff === "easy") { difficultySpeed = 2; diffGap = 120; }
-        if (diff === "normal") { difficultySpeed = 3; diffGap = 100; }
-        if (diff === "hard") { difficultySpeed = 5; diffGap = 80; }
-
-        difficultyMenu.style.display = "none";
-        init();
-      });
     });
 
     window.addEventListener("keydown", (e) => {
@@ -134,8 +81,6 @@
           init();
         } else {
           player.vy = JUMP;
-          jumpSound.currentTime = 0;
-          jumpSound.play();
           createJumpParticles();
         }
       }
@@ -146,7 +91,7 @@
       obstacles = [];
       particles = [];
       stars = createStars();
-      speed = difficultySpeed;
+      speed = 3;
       level = 1;
       frame = 0;
       score = 0;
@@ -168,11 +113,10 @@
     }
 
     function spawnObstacle() {
-      let gap = diffGap;
+      let gap = (Math.floor(Math.random() * 4) + 3) * BLOCK;
       let topHeight = Math.floor(Math.random() * (canvas.height - gap));
       const obsWidth = BLOCK - 10;
       const color = ["#ff6347", "#ff4444", "#ff9234"][Math.floor(Math.random() * 3)];
-
       obstacles.push({ x: canvas.width, y: 0, w: obsWidth, h: topHeight, color });
       obstacles.push({ x: canvas.width, y: topHeight + gap, w: obsWidth, h: canvas.height - (topHeight + gap), color });
     }
@@ -228,14 +172,6 @@
 
       player.vy += GRAVITY;
       player.y += player.vy;
-
-      // ★ 天井（上0px）に当たる
-      if (player.y < 0) {
-        player.y = 0;
-        player.vy = 2;
-      }
-
-      // ★ 地面
       if (player.y > canvas.height - BLOCK) {
         player.y = canvas.height - BLOCK;
         player.vy = 0;
@@ -245,14 +181,7 @@
       obstacles = obstacles.filter((o) => o.x + o.w > 0);
 
       for (let o of obstacles) {
-        if (
-          player.x < o.x + o.w &&
-          player.x + player.w > o.x &&
-          player.y < o.y + o.h &&
-          player.y + player.h > o.y
-        ) {
-          deadSound.currentTime = 0;
-          deadSound.play();
+        if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) {
           gameOver = true;
         }
       }
@@ -267,20 +196,15 @@
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       drawBackground();
-
       ctx.fillStyle = "deepskyblue";
       ctx.fillRect(player.x, player.y, player.w, player.h);
-
       for (let o of obstacles) {
         ctx.fillStyle = o.color;
         ctx.fillRect(o.x, o.y, o.w, o.h);
       }
-
       ctx.fillStyle = "rgba(255,255,255,0.6)";
       for (let p of particles) ctx.fillRect(p.x, p.y, 3, 3);
-
       ctx.fillStyle = "#fff";
       ctx.font = "16px sans-serif";
       ctx.fillText("Level: " + level, 10, 20);
@@ -300,6 +224,7 @@
       requestAnimationFrame(loop);
     }
 
+    init();
     loop();
   </script>
 </body>
