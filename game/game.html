@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Platformer — Starter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game-canvas" width="960" height="540"></canvas>
+
+    <div id="ui">
+      <div id="score">Score: 0</div>
+      <div id="lives">Lives: 3</div>
+      <div id="level">Level: 1</div>
+      <div id="message" class="hidden"></div>
+    </div>
+
+    <!-- touch controls for mobile -->
+    <div id="touch-controls" aria-hidden="true">
+      <button id="left-btn" class="touch-btn">◀</button>
+      <button id="right-btn" class="touch-btn">▶</button>
+      <button id="jump-btn" class="touch-btn">⭡</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
