@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" href="https://www.google.com/favicon.ico">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Google</title>
+
+<style>
+  body {
+    font-family: Roboto, Arial, sans-serif;
+    margin: 0;
+    background: #fff;
+    color: #202124;
+  }
+
+  /* ===============================
+        ★ 左上ナビ（強化版） ★
+     =============================== */
+  header {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 20px;
+    font-size: 14px;
+    height: 48px;
+    align-items: center;
+  }
+
+  .left a {
+    margin-right: 16px;
+    text-decoration: none;
+    color: #1f1f1f;
+    font-size: 14px;
+  }
+
+  .left a:hover {
+    text-decoration: underline;
+  }
+
+  .right a {
+    margin-left: 16px;
+    text-decoration: none;
+    color: #1f1f1f;
+  }
+
+  .right a:hover {
+    text-decoration: underline;
+  }
+
+  /* ===============================
+        ★ メイン ★
+     =============================== */
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12%;
+    text-align: center;
+  }
+
+  .logo img {
+    width: 272px;
+    height: 92px;
+  }
+
+  /* ===========================================
+      ★ Google本物レベル：検索バー超強化版 ★
+     =========================================== */
+  .search-box {
+    margin-top: 30px;
+    width: 580px;
+    max-width: 92%;
+    display: flex;
+    align-items: center;
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    padding: 6px 14px;
+    background: #fff;
+    transition: box-shadow 0.2s, border 0.2s;
+  }
+
+  .search-box:hover {
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+    border-color: transparent;
+  }
+
+  .search-box:focus-within {
+    box-shadow: 0 1px 6px rgba(32, 33, 36, .28);
+    border-color: transparent;
+  }
+
+  .search-icon {
+    width: 20px;
+    opacity: 0.45;
+    margin-right: 14px;
+    margin-left: 4px;
+  }
+
+  .search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    padding: 10px 4px;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.55;
+    margin-left: 10px;
+  }
+  .icon-btn img {
+    width: 24px;
+  }
+
+  /* ===============================
+        ★ ボタン ★
+     =============================== */
+  .btns {
+    margin-top: 28px;
+  }
+
+  .btns button {
+    font-size: 14px;
+    padding: 10px 20px;
+    margin: 6px;
+    border: 1px solid #f8f9fa;
+    border-radius: 4px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+
+  .btns button:hover {
+    border: 1px solid #dadce0;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  }
+
+  /* ===============================
+        ★ フッター ★
+     =============================== */
+  footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #f2f2f2;
+    font-size: 14px;
+    color: #70757a;
+    border-top: 1px solid #dadce0;
+  }
+
+  .footer-top {
+    padding: 12px 30px;
+  }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 30px;
+    border-top: 1px solid #dadce0;
+  }
+
+  .footer-bottom a {
+    color: #70757a;
+    margin-right: 18px;
+    text-decoration: none;
+  }
+
+  .footer-bottom a:hover {
+    text-decoration: underline;
+  }
+
+  /* ===============================
+        ★ 隠しページ iframe ★
+     =============================== */
+  #hiddenFrame {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border: none;
+    z-index: 999;
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="left">
+    <a href="https://about.google/">Googleについて</a>
+    <a href="https://store.google.com/">ストア</a>
+  </div>
+
+  <div class="right">
+    <a href="/login.html">ログイン</a>
+    <a href="/register.html">登録</a>
+  </div>
+</header>
+
+<main>
+  <div class="logo">
+    <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png">
+  </div>
+
+  <form onsubmit="return doSearch();">
+    <div class="search-box">
+      <img class="search-icon"
+        src="https://www.gstatic.com/images/icons/material/system/1x/search_black_24dp.png">
+
+      <input id="q" placeholder="検索または URL を入力" autocomplete="off">
+
+      <button type="button" class="icon-btn" onclick="location.href='https://google.com/a'">
+        <img src="https://www.gstatic.com/images/icons/material/system/1x/mic_black_24dp.png">
+      </button>
+
+      <button type="button" class="icon-btn" onclick="location.href='https://google.com/a'">
+        <img src="https://www.gstatic.com/images/icons/material/system/1x/image_black_24dp.png">
+      </button>
+    </div>
+
+    <div class="btns">
+      <button type="submit">Google 検索</button>
+      <button type="button" onclick="location.href='https://google.com/a'">I'm Feeling Lucky</button>
+    </div>
+  </form>
+</main>
+
+<footer>
+  <div class="footer-top">日本</div>
+  <div class="footer-bottom">
+    <div>
+      <a href="https://ads.google.com/">広告</a>
+      <a href="https://smallbusiness.withgoogle.com/">ビジネス</a>
+      <a href="https://www.google.com/search/howsearchworks/">検索の仕組み</a>
+    </div>
+
+    <div>
+      <a href="https://policies.google.com/privacy">プライバシー</a>
+      <a href="https://policies.google.com/terms">利用規約</a>
+    </div>
+  </div>
+</footer>
+
+<iframe id="hiddenFrame"></iframe>
+
+<script>
+function doSearch() {
+  const q = document.getElementById("q").value.trim();
+  const frame = document.getElementById("hiddenFrame");
+
+  if (q === "roguinn") {
+    frame.style.display = "block";
+    frame.src = "peji.html";
+    return false;
+  }
+
+  if (q === "roguinny78") {
+    frame.style.display = "block";
+    frame.src = "pejikanri.html";
+    return false;
+  }
+
+  location.href = "https://google.com/a";
+  return false;
+}
+</script>
+
+</body>
+</html>

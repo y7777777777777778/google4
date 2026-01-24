@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隠しページ</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222;
+      --card: #ffffff;
+      --border: #ddd;
+      --button-bg: #ffffff;
+      --button-text: #222;
+      --shadow: rgba(0,0,0,0.08);
+    }
+
+    body.dark {
+      --bg: #121212;
+      --text: #eaeaea;
+      --card: #1e1e1e;
+      --border: #444;
+      --button-bg: #1e1e1e;
+      --button-text: #eaeaea;
+      --shadow: rgba(0,0,0,0.5);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: 0.3s;
+    }
+
+    .header {
+      background: var(--bg);
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .header button,
+    .themeBtn {
+      background: var(--button-bg);
+      border: 1px solid var(--border);
+      color: var(--button-text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    .header button:hover,
+    .themeBtn:hover {
+      background: var(--border);
+    }
+
+    .menu {
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      color: var(--text);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 30px;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      margin-top: 20px;
+    }
+
+    .item {
+      text-align: center;
+    }
+
+    .btn-site {
+      width: 100%;
+      padding: 18px 0;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px var(--shadow);
+      font-size: 17px;
+      cursor: pointer;
+      transition: 0.3s;
+      color: var(--text);
+    }
+
+    .btn-site:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+
+    .desc {
+      margin-top: 12px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span>隠しページ</span>
+
+    <div class="header-controls">
+      <button onclick="goBack()">戻る</button>
+      <button class="themeBtn" onclick="toggleTheme()">ライト</button>
+    </div>
+  </div>
+
+  <div class="menu" id="menu">
+    <p style="text-align:center; margin-bottom: 30px;">チャットサイトはサーバーの関係上起動が遅いです。</p>
+    <p>Googleアカウント捨て垢作った　メアドdainozu772@gmail.com パスワードdainozu1919</p>
+    <div class="grid">
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://0c884609-16ce-4d6c-a856-9be09f098e00.web.createdevserver.com/')">チャットサイト</button>
+        <div class="desc">読み込みに時間がかかる場合があります</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('ru-rettokai.html')">ルーレットパーティー改</button>
+        <div class="desc">改造バージョン</div>
+      </div>
+
+            <div class="item">
+        <button class="btn-site" onclick="openSite('ru-retto.html')">ルーレットパーティー</button>
+        <div class="desc">ゲーセンにあるやつ</div>
+      </div>
+      
+            <div class="item">
+        <button class="btn-site" onclick="openSite('ifame.html')">iframeサイト（履歴なし）</button>
+        <div class="desc">iframeで開く軽量版</div>
+      </div>
+      
+      <div class="item">
+        <button class="btn-site" onclick="openSite('http://benkyou.onapon.com/')">今後プロキシ</button>
+        <div class="desc">ブロック解除待ち</div>
+      </div>
+     
+      <div class="item">
+        <button class="btn-site" onclick="openSite('game.html')">ゲーム　ri作</button>
+        <div class="desc">少し改良しました。</div>
+      </div>
+
+            <div class="item">
+        <button class="btn-site" onclick="openSite('pasuwa-do.html')">パスワード入力</button>
+        <div class="desc">知っている人だけ入ってください</div>
+      </div>
+      
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://www.freemake.com/jp/free_video_downloader/')">youtubeダウンロード</button>
+        <div class="desc">ダウンロードできます</div>
+      </div>
+
+
+      <div class="item">
+        <button class="btn-site" onclick="window.open('https://x.gd/rirekiume','_blank')">履歴埋め（Google風）</button>
+        <div class="desc">別タブで開きます</div>
+      </div>
+    </div>
+  </div>
+
+  <iframe id="iframe"></iframe>
+
+  <script>
+    // ▼ 戻るボタンの挙動
+    function goBack() {
+      // ① 親(Google風) iframe の中なら閉じる
+      try {
+        if (window.parent && window.parent !== window) {
+          const frame = window.parent.document.getElementById("hiddenFrame");
+          if (frame) {
+            frame.style.display = "none";
+            frame.src = "";
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // ② ホーム(index.html) → peji.html の場合はホームへ
+      const ref = document.referrer;
+      if (ref.includes("index.html") || ref.endsWith("/")) {
+        location.href = "index.html";
+        return;
+      }
+
+      // ③ 通常の戻る
+      history.back();
+    }
+
+    // ▼ 内部 iframe を開く
+    function openSite(url) {
+      const iframe = document.getElementById("iframe");
+      document.getElementById("menu").style.display = "none";
+      iframe.style.display = "block";
+      iframe.src = url;
+    }
+
+    // ▼ テーマ切り替え
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
+      localStorage.setItem("theme_peji", isDark ? "dark" : "light");
+    }
+
+    // ▼ 保存テーマ適用
+    window.onload = () => {
+      const saved = localStorage.getItem("theme_peji");
+      if (saved === "dark") {
+        document.body.classList.add("dark");
+        document.querySelector(".themeBtn").textContent = "ダーク";
+      }
+    };
+  </script>
+</body>
+</html>

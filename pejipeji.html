@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>隠しページ</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222;
+      --card: #ffffff;
+      --border: #ddd;
+      --button-bg: #ffffff;
+      --button-text: #222;
+      --shadow: rgba(0,0,0,0.08);
+    }
+
+    body.dark {
+      --bg: #121212;
+      --text: #eaeaea;
+      --card: #1e1e1e;
+      --border: #444;
+      --button-bg: #1e1e1e;
+      --button-text: #eaeaea;
+      --shadow: rgba(0,0,0,0.5);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: 0.3s;
+    }
+
+    .menu {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 30px;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      margin-top: 20px;
+    }
+
+    .item {
+      text-align: center;
+    }
+
+    .btn-site {
+      width: 100%;
+      padding: 18px 0;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px var(--shadow);
+      font-size: 17px;
+      cursor: pointer;
+      transition: 0.3s;
+      color: var(--text);
+    }
+
+    .btn-site:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+
+    .desc {
+      margin-top: 12px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: none;
+    }
+
+    .themeBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--button-bg);
+      border: 1px solid var(--border);
+      color: var(--button-text);
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.25s;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .themeBtn:hover {
+      background: var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="menu" id="menu">
+    <p style="text-align:center; margin-bottom: 30px;">サイトを開くボタンです。</p>
+
+    <div class="grid">
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://english-jp.easterndns.com/')">shadow</button>
+        <div class="desc">shadow</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://api.loilonoteapp.ipv64.de/')">shadow</button>
+        <div class="desc">shadow</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://karaseee.f5.si/')">shadow</button>
+        <div class="desc">shadow</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://f5b2mjrkm3f8.easterndns.com/')">shadow</button>
+        <div class="desc">shadow</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://hainuyoushadow2.laviewddns.com/')">shadow</button>
+        <div class="desc">shadow</div>
+      </div>
+
+    </div>
+  </div>
+
+  <iframe id="iframe"></iframe>
+
+  <button class="themeBtn" onclick="toggleTheme()">ライト</button>
+
+  <script>
+    function openSite(url) {
+      const iframe = document.getElementById("iframe");
+      document.getElementById("menu").style.display = "none";
+      iframe.style.display = "block";
+      iframe.src = url;
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
+      localStorage.setItem("theme_peji", isDark ? "dark" : "light");
+    }
+
+    window.onload = () => {
+      const saved = localStorage.getItem("theme_peji");
+      if (saved === "dark") {
+        document.body.classList.add("dark");
+        document.querySelector(".themeBtn").textContent = "ダーク";
+      }
+    };
+  </script>
+
+</body>
+</html>

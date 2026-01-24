@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>横スクロールアスレチック</title>
+  <style>
+    body {
+      background: #000;
+      color: #eee;
+      text-align: center;
+      font-family: "Segoe UI", sans-serif;
+    }
+    h2 {
+      margin-top: 20px;
+      font-size: 28px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 5px #0af;
+    }
+    p {
+      opacity: 0.85;
+    }
+    canvas {
+      background: linear-gradient(#0a0a12 0%, #050510 40%, #000 100%);
+      border: 3px solid #444;
+      margin-top: 12px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px #000, inset 0 0 30px #111;
+    }
+    #restart {
+      display: none;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 22px;
+      font-size: 18px;
+      background: #111;
+      color: #fff;
+      border: 2px solid #555;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.25s;
+      z-index: 10;
+    }
+    #restart:hover {
+      background: #fff;
+      color: #000;
+      border-color: #aaa;
+      box-shadow: 0 0 10px #fff;
+    }
+  </style>
+</head>
+<body>
+  <h2>横スクロールアスレチック</h2>
+  <p>スペースキーでジャンプ。</p>
+
+  <canvas id="game" width="600" height="400"></canvas>
+  <button id="restart">リスタート</button>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const BLOCK = 40;
+    const GRAVITY = 0.6;
+    const JUMP = -8;
+
+    let player, obstacles, particles, stars, highScore;
+    let speed, level, frame, gameOver, score;
+
+    const restartBtn = document.getElementById("restart");
+    restartBtn.setAttribute("tabindex", "-1");
+    restartBtn.addEventListener("click", () => {
+      restartBtn.style.display = "none";
+      init();
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        if (gameOver) {
+          restartBtn.style.display = "none";
+          init();
+        } else {
+          player.vy = JUMP;
+          createJumpParticles();
+        }
+      }
+    });
+
+    function init() {
+      player = { x: 80, y: canvas.height - BLOCK, vy: 0, w: BLOCK, h: BLOCK };
+      obstacles = [];
+      particles = [];
+      stars = createStars();
+      speed = 3;
+      level = 1;
+      frame = 0;
+      score = 0;
+      highScore = Number(localStorage.getItem("highscore") || 0);
+      gameOver = false;
+    }
+
+    function createStars() {
+      let arr = [];
+      for (let i = 0; i < 60; i++) {
+        arr.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 2 + 1,
+          blink: Math.random() * 0.03
+        });
+      }
+      return arr;
+    }
+
+    function spawnObstacle() {
+      let gap = (Math.floor(Math.random() * 4) + 3) * BLOCK;
+      let topHeight = Math.floor(Math.random() * (canvas.height - gap));
+      const obsWidth = BLOCK - 10;
+      const color = ["#ff6347", "#ff4444", "#ff9234"][Math.floor(Math.random() * 3)];
+      obstacles.push({ x: canvas.width, y: 0, w: obsWidth, h: topHeight, color });
+      obstacles.push({ x: canvas.width, y: topHeight + gap, w: obsWidth, h: canvas.height - (topHeight + gap), color });
+    }
+
+    function createJumpParticles() {
+      for (let i = 0; i < 10; i++) {
+        particles.push({
+          x: player.x + player.w / 2,
+          y: player.y + player.h,
+          vx: (Math.random() - 0.5) * 4,
+          vy: Math.random() * -2,
+          life: 20
+        });
+      }
+    }
+
+    function updateParticles() {
+      particles = particles.filter((p) => p.life > 0);
+      for (let p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.1;
+        p.life--;
+      }
+    }
+
+    function updateBackground() {
+      for (let s of stars) {
+        s.size += s.blink;
+        if (s.size > 3 || s.size < 1) s.blink *= -1;
+      }
+    }
+
+    function update() {
+      if (gameOver) {
+        if (score > highScore) {
+          highScore = Math.floor(score);
+          localStorage.setItem("highscore", highScore);
+        }
+        restartBtn.style.display = "block";
+        return;
+      }
+
+      frame++;
+      score += 0.02;
+      updateBackground();
+
+      if (frame % 100 === 0) spawnObstacle();
+      if (frame % 600 === 0) {
+        level++;
+        speed++;
+      }
+
+      player.vy += GRAVITY;
+      player.y += player.vy;
+      if (player.y > canvas.height - BLOCK) {
+        player.y = canvas.height - BLOCK;
+        player.vy = 0;
+      }
+
+      for (let o of obstacles) o.x -= speed;
+      obstacles = obstacles.filter((o) => o.x + o.w > 0);
+
+      for (let o of obstacles) {
+        if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) {
+          gameOver = true;
+        }
+      }
+
+      updateParticles();
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = "#fff";
+      for (let s of stars) ctx.fillRect(s.x, s.y, s.size, s.size);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      ctx.fillStyle = "deepskyblue";
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+      for (let o of obstacles) {
+        ctx.fillStyle = o.color;
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+      }
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      for (let p of particles) ctx.fillRect(p.x, p.y, 3, 3);
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.fillText("Level: " + level, 10, 20);
+      ctx.fillText("Score: " + Math.floor(score), 10, 40);
+      ctx.fillText("HighScore: " + highScore, 10, 60);
+
+      if (gameOver) {
+        ctx.fillStyle = "yellow";
+        ctx.font = "30px sans-serif";
+        ctx.fillText("GAME OVER", canvas.width / 2 - 90, canvas.height / 2 - 40);
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    init();
+    loop();
+  </script>
+</body>
+</html>
