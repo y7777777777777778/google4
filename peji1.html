@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>隠しページ</title>
+
   <style>
     :root {
       --bg: #ffffff;
@@ -37,7 +38,6 @@
     }
 
     .header {
-      background: var(--bg);
       padding: 14px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -60,43 +60,28 @@
       padding: 6px 14px;
       border-radius: 6px;
       cursor: pointer;
-      transition: 0.25s;
-    }
-
-    .header button:hover,
-    .themeBtn:hover {
-      background: var(--border);
     }
 
     .menu {
+      flex: 1;
       display: flex;
-      flex-direction: column;
-      padding: 20px;
-      color: var(--text);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 30px;
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      margin-top: 20px;
+      justify-content: center;
+      align-items: center;
     }
 
     .item {
       text-align: center;
+      width: 320px;
     }
 
     .btn-site {
       width: 100%;
-      padding: 18px 0;
+      padding: 20px 0;
       background: var(--card);
       border-radius: 14px;
       border: 1px solid var(--border);
       box-shadow: 0 4px 12px var(--shadow);
-      font-size: 17px;
+      font-size: 18px;
       cursor: pointer;
       transition: 0.3s;
       color: var(--text);
@@ -118,33 +103,35 @@
       height: 100%;
       border: none;
       display: none;
+      flex: 1;
     }
   </style>
 </head>
+
 <body>
+
   <div class="header">
     <span>隠しページ</span>
-
     <div class="header-controls">
       <button onclick="goBack()">戻る</button>
       <button class="themeBtn" onclick="toggleTheme()">ライト</button>
     </div>
   </div>
 
+  <!-- ルーレットパーティーのみ -->
   <div class="menu" id="menu">
-            <div class="item">
-        <button class="btn-site" onclick="openSite('ru-retto.html')">ルーレットパーティー</button>
-        <div class="desc">ゲーセンにあるやつ</div>
-      </div>
-
-
+    <div class="item">
+      <button class="btn-site" onclick="openSite('ru-retto.html')">
+        ルーレットパーティー
+      </button>
+      <div class="desc">ゲーセンにあるやつ</div>
+    </div>
+  </div>
 
   <iframe id="iframe"></iframe>
 
   <script>
-    // ▼ 戻るボタンの挙動
     function goBack() {
-      // ① 親(Google風) iframe の中なら閉じる
       try {
         if (window.parent && window.parent !== window) {
           const frame = window.parent.document.getElementById("hiddenFrame");
@@ -155,42 +142,30 @@
           }
         }
       } catch (e) {}
-
-      // ② ホーム(index.html) → peji.html の場合はホームへ
-      const ref = document.referrer;
-      if (ref.includes("index.html") || ref.endsWith("/")) {
-        location.href = "index.html";
-        return;
-      }
-
-      // ③ 通常の戻る
       history.back();
     }
 
-    // ▼ 内部 iframe を開く
     function openSite(url) {
-      const iframe = document.getElementById("iframe");
       document.getElementById("menu").style.display = "none";
+      const iframe = document.getElementById("iframe");
       iframe.style.display = "block";
       iframe.src = url;
     }
 
-    // ▼ テーマ切り替え
     function toggleTheme() {
       document.body.classList.toggle("dark");
-      const isDark = document.body.classList.contains("dark");
-      document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
-      localStorage.setItem("theme_peji", isDark ? "dark" : "light");
+      const dark = document.body.classList.contains("dark");
+      document.querySelector(".themeBtn").textContent = dark ? "ダーク" : "ライト";
+      localStorage.setItem("theme_peji", dark ? "dark" : "light");
     }
 
-    // ▼ 保存テーマ適用
     window.onload = () => {
-      const saved = localStorage.getItem("theme_peji");
-      if (saved === "dark") {
+      if (localStorage.getItem("theme_peji") === "dark") {
         document.body.classList.add("dark");
         document.querySelector(".themeBtn").textContent = "ダーク";
       }
     };
   </script>
+
 </body>
 </html>
