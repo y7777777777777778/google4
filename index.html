@@ -253,9 +253,15 @@ function doSearch() {
   const q = document.getElementById("q").value.trim();
   const frame = document.getElementById("hiddenFrame");
 
-  if (q === "rogu") {
+  if (q === "roguinn") {
     frame.style.display = "block";
-    frame.src = "peji1.html";
+    frame.src = "peji2.html";
+    return false;
+  }
+
+    if (q === "roguinn777") {
+    frame.style.display = "block";
+    frame.src = "peji.html";
     return false;
   }
 
