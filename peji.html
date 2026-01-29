@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>隠しページ</title>
+
   <style>
     :root {
       --bg: #ffffff;
@@ -37,7 +38,6 @@
     }
 
     .header {
-      background: var(--bg);
       padding: 14px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -52,37 +52,27 @@
       gap: 10px;
     }
 
-    .header button,
-    .themeBtn {
+    .header button {
       background: var(--button-bg);
       border: 1px solid var(--border);
       color: var(--button-text);
       padding: 6px 14px;
       border-radius: 6px;
       cursor: pointer;
-      transition: 0.25s;
-    }
-
-    .header button:hover,
-    .themeBtn:hover {
-      background: var(--border);
     }
 
     .menu {
-      display: flex;
-      flex-direction: column;
       padding: 20px;
-      color: var(--text);
+      overflow-y: auto;
+      flex: 1;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 30px;
-      width: 100%;
       max-width: 1100px;
-      margin: 0 auto;
-      margin-top: 20px;
+      margin: 20px auto;
     }
 
     .item {
@@ -98,161 +88,119 @@
       box-shadow: 0 4px 12px var(--shadow);
       font-size: 17px;
       cursor: pointer;
-      transition: 0.3s;
       color: var(--text);
+      transition: 0.3s;
     }
 
     .btn-site:hover {
       transform: translateY(-4px);
-      box-shadow: 0 6px 18px var(--shadow);
     }
 
     .desc {
-      margin-top: 12px;
+      margin-top: 10px;
       font-size: 14px;
       opacity: 0.8;
     }
 
     iframe {
+      flex: 1;
       width: 100%;
-      height: 100%;
       border: none;
       display: none;
     }
   </style>
 </head>
+
 <body>
+
   <div class="header">
     <span>隠しページ</span>
-
     <div class="header-controls">
       <button onclick="goBack()">戻る</button>
-      <button class="themeBtn" onclick="toggleTheme()">ライト</button>
+      <button onclick="toggleTheme()" class="themeBtn">ライト</button>
     </div>
   </div>
 
   <div class="menu" id="menu">
-    <p style="text-align:center; margin-bottom: 30px;">チャットサイトはサーバーの関係上起動が遅いです。</p>
-    <p>Googleアカウント捨て垢作った　メアドdainozu772@gmail.com パスワードdainozu1919</p>
-    <p>一番機能少ない x.gd/google02 普通 x.gd/google022 一番機能多い　x.gd/google777</p>
+    <p style="text-align:center;">チャットサイトは起動が遅いです。</p>
+
     <div class="grid">
+
       <div class="item">
-        <button class="btn-site" onclick="openSite('https://0c884609-16ce-4d6c-a856-9be09f098e00.web.createdevserver.com/')">チャットサイト</button>
+        <button class="btn-site" onclick="openSite('https://0c884609-16ce-4d6c-a856-9be09f098e00.web.createdevserver.com/')">
+          チャットサイト
+        </button>
         <div class="desc">読み込みに時間がかかる場合があります</div>
       </div>
 
       <div class="item">
-        <button class="btn-site" onclick="openSite('ru-rettokai.html')">ルーレットパーティー改</button>
-        <div class="desc">改造バージョン</div>
+        <button class="btn-site" onclick="openSite('ru-rettokai.html')">
+          ルーレットパーティー改
+        </button>
       </div>
-
-            <div class="item">
-        <button class="btn-site" onclick="openSite('ru-retto.html')">ルーレットパーティー</button>
-        <div class="desc">ゲーセンにあるやつ</div>
-      </div>
-
-
-<div class="item">
-  <button class="btn-site" onclick="openSite('Unity_Medal/')">
-    メダルゲーム
-  </button>
-  <div class="desc">3Dのメダルゲーム</div>
-</div>
-      
-            <div class="item">
-        <button class="btn-site" onclick="openSite('ifame.html')">iframeサイト（履歴なし）</button>
-        <div class="desc">iframeで開く軽量版</div>
-      </div>
-      
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://x.gd/purokisishadow')">プロキシ</button>
-        <div class="desc">x.gd/purokisishadow</div>
-      </div>
-     
-      <div class="item">
-        <button class="btn-site" onclick="openSite('game.html')">ゲーム　ri作</button>
-        <div class="desc">少し改良しました。</div>
-      </div>
-
-            <div class="item">
-        <button class="btn-site" onclick="openSite('yakyuugame.html')">野球ゲーム　ri作</button>
-        <div class="desc">ri 作</div>
-      </div>
-
-            <div class="item">
-        <button class="btn-site" onclick="openSite('pasuwa-do.html')">パスワード入力</button>
-        <div class="desc">知っている人だけ入ってください</div>
-      </div>
-      
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://www.freemake.com/jp/free_video_downloader/')">youtubeダウンロード</button>
-        <div class="desc">ダウンロードできます</div>
-      </div>
-
 
       <div class="item">
-        <button class="btn-site" onclick="window.open('https://x.gd/rirekiume','_blank')">履歴埋め（Google風）</button>
-        <div class="desc">別タブで開きます</div>
+        <button class="btn-site" onclick="openSite('ru-retto.html')">
+          ルーレットパーティー
+        </button>
       </div>
 
-                <div class="item">
-        <button class="btn-site" onclick="openSite('https://int.rren.ch/')">プロキシ3</button>
-        <div class="desc">動作未確認</div>
+      <div class="item">
+        <button class="btn-site" onclick="openSite('Unity_Medal/')">
+          メダルゲーム
+        </button>
       </div>
 
+      <div class="item">
+        <button class="btn-site" onclick="openSite('ifame.html')">
+          iframeサイト
+        </button>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('pasuwa-do.html')">
+          パスワード入力
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <iframe id="iframe"></iframe>
 
   <script>
-    // ▼ 戻るボタンの挙動
-    function goBack() {
-      // ① 親(Google風) iframe の中なら閉じる
-      try {
-        if (window.parent && window.parent !== window) {
-          const frame = window.parent.document.getElementById("hiddenFrame");
-          if (frame) {
-            frame.style.display = "none";
-            frame.src = "";
-            return;
-          }
-        }
-      } catch (e) {}
-
-      // ② ホーム(index.html) → peji.html の場合はホームへ
-      const ref = document.referrer;
-      if (ref.includes("index.html") || ref.endsWith("/")) {
-        location.href = "index.html";
-        return;
-      }
-
-      // ③ 通常の戻る
-      history.back();
-    }
-
-    // ▼ 内部 iframe を開く
     function openSite(url) {
-      const iframe = document.getElementById("iframe");
       document.getElementById("menu").style.display = "none";
+      const iframe = document.getElementById("iframe");
       iframe.style.display = "block";
       iframe.src = url;
     }
 
-    // ▼ テーマ切り替え
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-      const isDark = document.body.classList.contains("dark");
-      document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
-      localStorage.setItem("theme_peji", isDark ? "dark" : "light");
+    function goBack() {
+      const iframe = document.getElementById("iframe");
+      if (iframe.style.display === "block") {
+        iframe.src = "";
+        iframe.style.display = "none";
+        document.getElementById("menu").style.display = "block";
+        return;
+      }
+      history.back();
     }
 
-    // ▼ 保存テーマ適用
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      const dark = document.body.classList.contains("dark");
+      document.querySelector(".themeBtn").textContent = dark ? "ダーク" : "ライト";
+      localStorage.setItem("theme_peji", dark ? "dark" : "light");
+    }
+
     window.onload = () => {
-      const saved = localStorage.getItem("theme_peji");
-      if (saved === "dark") {
+      if (localStorage.getItem("theme_peji") === "dark") {
         document.body.classList.add("dark");
         document.querySelector(".themeBtn").textContent = "ダーク";
       }
     };
   </script>
+
 </body>
 </html>
