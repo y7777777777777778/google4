@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>隠しページ</title>
+
   <style>
     :root {
       --bg: #ffffff;
@@ -37,14 +38,16 @@
     }
 
     .header {
+      height: 56px;
       background: var(--bg);
-      padding: 14px 20px;
+      padding: 0 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 18px;
       font-weight: 600;
+      flex-shrink: 0;
     }
 
     .header-controls {
@@ -69,20 +72,17 @@
     }
 
     .menu {
-      display: flex;
-      flex-direction: column;
       padding: 20px;
-      color: var(--text);
+      overflow-y: auto;
+      flex: 1;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 30px;
-      width: 100%;
       max-width: 1100px;
-      margin: 0 auto;
-      margin-top: 20px;
+      margin: 20px auto 0;
     }
 
     .item {
@@ -115,7 +115,7 @@
 
     iframe {
       width: 100%;
-      height: 100%;
+      height: calc(100vh - 56px);
       border: none;
       display: none;
     }
@@ -136,31 +136,87 @@
       チャットサイトはサーバーの関係上起動が遅いです。
     </p>
 
+    <!-- ⑤はそのまま残しています -->
     <p>Googleアカウント捨て垢作った　メアドdainozu772@gmail.com パスワードdainozu1919</p>
     <p>一番機能少ない x.gd/google02 普通 x.gd/google022 一番機能多い x.gd/google777</p>
 
     <div class="grid">
-
-
-
       <div class="item">
         <button class="btn-site" onclick="openSite('https://x.gd/purokisishadow')">
-          プロキシ
+          インターテスラー
         </button>
-        <div class="desc">x.gd/purokisishadow</div>
-
-              <div class="item">
-        <button class="btn-site" onclick="openSite('https://x.gd/purokisishadow')">
-          プロキシ
-        </button>
-        <div class="desc">x.gd/purokisishadow</div>
-
-
-
-        
+        <div class="desc">1/29 動作確認済み</div>
       </div>
-</div>
 
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://int.rren.ch/')">
+          インターテスラー2
+        </button>
+        <div class="desc">1/29 動作確認済み</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://playernation.canalspa.cl/')">
+          プロキシ1
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://gov.orion-stella.com/s.html')">
+          プロキシ2
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://rooms.hotelconsuladoinn.com/onboarding/')">
+          プロキシ3
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://vcsa.national-birdshow.com/')">
+          プロキシ4
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://eglobaleducation.com/')">
+          プロキシ5
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://penguin-perfect.land.dragonfruit.su/')">
+          utopia1
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://studysheets.justlearning.net/')">
+          utopia2
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://ja3dery.chickenkiller.com/')">
+          utopia3
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://calculator.hotelconsuladoinn.com/')">
+          utopia4
+        </button>
+        <div class="desc">1/30追加 動作未確認</div>
+      </div>
     </div>
   </div>
 
@@ -168,24 +224,9 @@
 
   <script>
     function goBack() {
-      try {
-        if (window.parent && window.parent !== window) {
-          const frame = window.parent.document.getElementById("hiddenFrame");
-          if (frame) {
-            frame.style.display = "none";
-            frame.src = "";
-            return;
-          }
-        }
-      } catch (e) {}
-
-      const ref = document.referrer;
-      if (ref.includes("index.html") || ref.endsWith("/")) {
-        location.href = "index.html";
-        return;
-      }
-
-      history.back();
+      document.getElementById("iframe").style.display = "none";
+      document.getElementById("iframe").src = "";
+      document.getElementById("menu").style.display = "block";
     }
 
     function openSite(url) {
@@ -204,8 +245,7 @@
     }
 
     window.onload = () => {
-      const saved = localStorage.getItem("theme_peji");
-      if (saved === "dark") {
+      if (localStorage.getItem("theme_peji") === "dark") {
         document.body.classList.add("dark");
         document.querySelector(".themeBtn").textContent = "ダーク";
       }
@@ -213,4 +253,3 @@
   </script>
 </body>
 </html>
-
