@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>完成版 野球ゲーム</title>
+
+  <!-- =====================
+       スタイル設定
+       ===================== -->
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      background: #eef7ff;
+    }
+
+    h1 {
+      margin-top: 10px;
+    }
+
+    /* フィールド */
+    #field {
+      margin: 20px auto;
+      width: 600px;
+      height: 300px;
+      border: 3px solid #333;
+      background: #c8ffc8;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ボール */
+    #ball {
+      width: 20px;
+      height: 20px;
+      background: white;
+      border: 2px solid black;
+      border-radius: 50%;
+      position: absolute;
+      left: 50px;
+      top: 140px;
+    }
+
+    /* バット */
+    #bat {
+      width: 10px;
+      height: 80px;
+      background: brown;
+      position: absolute;
+      left: 550px;
+      top: 110px;
+      transform-origin: bottom;
+    }
+
+    /* スイング軌道の白い点 */
+    .dot {
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      opacity: 0.8;
+    }
+
+    /* 情報表示 */
+    #info {
+      font-size: 20px;
+      margin-top: 10px;
+      min-height: 24px;
+    }
+
+    /* 説明エリア */
+    #desc {
+      width: 600px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: left;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>⚾ 完成版 野球ゲーム</h1>
+  <p>スペース：スイング ／ Shift＋スペース：バント</p>
+
+  <!-- ゲーム画面 -->
+  <div id="field">
+    <div id="ball"></div>
+    <div id="bat"></div>
+  </div>
+
+  <!-- 判定表示 -->
+  <div id="info"></div>
+
+  <!-- =====================
+       ゲーム説明
+       ===================== -->
+  <div id="desc">
+    <h3>🎉 この完成版でできること</h3>
+
+    <strong>1. 投球システム</strong><br>
+    ・ストレート / カーブ / フォークを自動選択<br>
+    ・球速・変化量・コースはランダム<br><br>
+
+    <strong>2. バット軌道の白い点々</strong><br>
+    ・スイングすると軌道が白い点で表示<br>
+    ・タイミングが視覚的に分かり、打ちやすい<br><br>
+
+    <strong>3. バント（Shift＋Space）</strong><br>
+    ・バットが水平になる<br>
+    ・弱い打球になる<br>
+    ・バント専用の軌道も表示<br><br>
+
+    <strong>4. 判定システム</strong><br>
+    ・ヒット / 空振り / ストライク / ボール<br>
+    ・野球としての基本動作がすべて揃っている
+  </div>
+
+  <!-- =====================
+       JavaScript
+       ===================== -->
+  <script>
+    // 要素取得
+    const ball = document.getElementById("ball");
+    const bat = document.getElementById("bat");
+    const info = document.getElementById("info");
+    const field = document.getElementById("field");
+
+    // ボール位置と速度
+    let ballX = 50;
+    let ballY = 140;
+    let speedX = 0;
+    let speedY = 0;
+
+    // ストライクゾーン
+    const zoneTop = 100;
+    const zoneBottom = 180;
+
+    // 情報表示更新
+    function updateInfo(text = "") {
+      info.innerHTML = text;
+    }
+
+    // =====================
+    // 投球処理
+    // =====================
+    function pitch() {
+      ballX = 50;
+      ballY = 140;
+      speedX = 4 + Math.random() * 4;
+
+      const type = Math.floor(Math.random() * 3);
+
+      if (type === 0) {
+        updateInfo("ストレート！");
+        speedY = 0;
+      } else if (type === 1) {
+        updateInfo("カーブ！");
+        speedY = (Math.random() - 0.5) * 2;
+      } else {
+        updateInfo("フォーク！");
+        speedY = 2 + Math.random() * 2;
+      }
+    }
+
+    // =====================
+    // スイング軌道
+    // =====================
+    function drawSwingDots() {
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          dot.style.left = (550 - i * 5) + "px";
+          dot.style.top = (110 + Math.sin(i * 0.3) * 20) + "px";
+          field.appendChild(dot);
+          setTimeout(() => dot.remove(), 100);
+        }, i * 10);
+      }
+    }
+
+    function drawBuntDots() {
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const dot = document.createElement("div");
+          dot.className = "dot";
+          dot.style.left = (550 - i * 5) + "px";
+          dot.style.top = "140px";
+          field.appendChild(dot);
+          setTimeout(() => dot.remove(), 100);
+        }, i * 10);
+      }
+    }
+
+    // =====================
+    // スイング処理
+    // =====================
+    function swing(isBunt) {
+      if (isBunt) {
+        bat.style.transform = "rotate(0deg)";
+        drawBuntDots();
+      } else {
+        bat.style.transform = "rotate(-60deg)";
+        drawSwingDots();
+      }
+
+      // 当たり判定
+      if (ballX > 520 && ballX < 560) {
+        if (isBunt) {
+          updateInfo("バント成功！");
+          speedX = 1;
+          speedY = 0;
+        } else {
+          updateInfo("ヒット！");
+          speedX = 6;
+          speedY = (Math.random() - 0.5) * 4;
+        }
+      } else {
+        updateInfo("空振り！");
+      }
+
+      setTimeout(() => {
+        bat.style.transform = "rotate(0deg)";
+      }, 200);
+    }
+
+    // =====================
+    // メインループ
+    // =====================
+    function loop() {
+      ballX += speedX;
+      ballY += speedY;
+
+      ball.style.left = ballX + "px";
+      ball.style.top = ballY + "px";
+
+      // キャッチャー到達判定
+      if (ballX > 600) {
+        if (ballY > zoneTop && ballY < zoneBottom) {
+          updateInfo("ストライク！");
+        } else {
+          updateInfo("ボール！");
+        }
+        pitch();
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    // キー操作
+    document.body.onkeydown = (e) => {
+      if (e.code === "Space") {
+        swing(e.shiftKey);
+      }
+    };
+
+    // 初期化
+    pitch();
+    loop();
+  </script>
+</body>
+</html>
