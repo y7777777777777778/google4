@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TETRIS</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:#05050a;
+    --board-bg:#0b0b14;
+    --panel-bg:rgba(14,14,24,0.88);
+    --border:rgba(100,100,180,0.22);
+    --border-hi:rgba(140,130,255,0.45);
+    --accent:#7b6fff;
+    --accent2:#00e5ff;
+    --text:#b0b0c8;
+    --text-dim:#4a4a60;
+    --gold:#ffd700;
+    --font-title:'Bebas Neue',sans-serif;
+    --font-ui:'Rajdhani',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:var(--bg);min-height:100vh;
+    display:flex;justify-content:center;align-items:center;
+    font-family:var(--font-ui);color:var(--text);
+    overflow:hidden;user-select:none;
+}
+
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+.crt-vignette{
+    position:fixed;inset:0;z-index:50;pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,0.58) 100%);
+}
+.crt-line{
+    position:fixed;top:-4px;left:0;right:0;height:3px;
+    background:linear-gradient(180deg,transparent,rgba(140,130,255,0.06),transparent);
+    z-index:49;pointer-events:none;
+    animation:crt-scan 7s linear infinite;opacity:.7;
+}
+@keyframes crt-scan{from{top:-4px}to{top:100vh}}
+
+.wrapper{position:relative;z-index:1;display:flex;align-items:flex-start;gap:24px;}
+
+/* ─── サイドパネル ─── */
+.side{display:flex;flex-direction:column;gap:10px;width:156px;}
+.card{
+    background:var(--panel-bg);border:1px solid var(--border);
+    border-radius:8px;padding:12px 14px;
+    position:relative;overflow:hidden;transition:border-color .3s;
+}
+.card:hover{border-color:var(--border-hi);}
+.card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent 0%,var(--accent) 40%,var(--accent2) 60%,transparent 100%);
+    opacity:.5;
+}
+.card__label{
+    font-size:9.5px;font-weight:600;letter-spacing:2.8px;
+    text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;
+}
+.card__val{
+    font-family:var(--font-title);font-size:30px;color:#fff;letter-spacing:1px;
+    text-shadow:0 0 14px rgba(123,111,255,0.45);
+}
+.card__val.pop{animation:val-pop .22s cubic-bezier(.2,.8,.3,1);}
+@keyframes val-pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+
+.card__canvas-wrap{display:flex;justify-content:center;margin-top:2px;}
+.card__canvas-wrap canvas{
+    background:var(--board-bg);border:1px solid var(--border);
+    border-radius:5px;transition:opacity .25s;
+}
+.card__canvas-wrap.locked canvas{opacity:.28;}
+
+/* ハイスコアカード */
+.card--best::before{
+    background:linear-gradient(90deg,transparent 0%,var(--gold) 40%,#ffaa00 60%,transparent 100%);
+    opacity:.4;
+}
+.card--best .card__label{color:rgba(255,215,0,0.55);}
+.card--best .card__val{
+    font-size:22px;color:var(--gold);
+    text-shadow:0 0 12px rgba(255,215,0,0.45);
+}
+
+/* ─── ボード中央 ─── */
+.board-wrap{position:relative;}
+.title-wrap{text-align:center;margin-bottom:12px;}
+.title{
+    font-family:var(--font-title);font-size:38px;letter-spacing:16px;color:#fff;
+    display:inline-block;
+    text-shadow:0 0 10px rgba(123,111,255,0.8),0 0 40px rgba(123,111,255,0.35),0 0 80px rgba(123,111,255,0.12);
+    animation:title-pulse 3s ease-in-out infinite;
+}
+@keyframes title-pulse{
+    0%,100%{text-shadow:0 0 10px rgba(123,111,255,0.8),0 0 40px rgba(123,111,255,0.35),0 0 80px rgba(123,111,255,0.12);}
+    50%{text-shadow:0 0 18px rgba(123,111,255,1),0 0 55px rgba(123,111,255,0.5),0 0 100px rgba(123,111,255,0.2);}
+}
+
+.frame-outer{
+    padding:2px;border-radius:6px;
+    background:linear-gradient(135deg,rgba(123,111,255,0.5) 0%,rgba(0,229,255,0.18) 50%,rgba(123,111,255,0.5) 100%);
+    position:relative;
+}
+.corner{position:absolute;width:10px;height:10px;border-color:var(--accent);border-style:solid;z-index:3;}
+.corner--tl{top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:3px 0 0 0;}
+.corner--tr{top:-1px;right:-1px;border-width:2px 2px 0 0;border-radius:0 3px 0 0;}
+.corner--bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;border-radius:0 0 0 3px;}
+.corner--br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 3px 0;}
+
+.frame-inner{border-radius:5px;overflow:hidden;position:relative;background:var(--board-bg);}
+#tetris{display:block;background:var(--board-bg);}
+
+.scanlines{
+    position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(0deg,transparent 0px,transparent 3px,rgba(0,0,0,0.07) 3px,rgba(0,0,0,0.07) 4px);
+}
+
+.line-flash{
+    position:absolute;left:0;right:0;height:30px;
+    pointer-events:none;z-index:4;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);
+    animation:line-flash-out .38s ease forwards;
+}
+@keyframes line-flash-out{0%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1.6)}}
+
+.level-flash{
+    position:fixed;inset:0;z-index:60;pointer-events:none;
+    background:radial-gradient(ellipse at center,rgba(123,111,255,0.38) 0%,transparent 68%);
+    opacity:0;animation:level-flash .55s ease forwards;
+}
+@keyframes level-flash{0%{opacity:0}28%{opacity:1}100%{opacity:0}}
+
+/* ─── コントロール ─── */
+.ctrl{
+    background:var(--panel-bg);border:1px solid var(--border);
+    border-radius:8px;padding:12px 14px;
+}
+.ctrl__title{
+    font-size:9.5px;font-weight:600;letter-spacing:2.8px;
+    text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;
+}
+.ctrl__row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:2.5px 0;font-size:12px;color:var(--text-dim);font-weight:500;
+}
+.ctrl__key{
+    display:inline-block;
+    background:linear-gradient(180deg,rgba(123,111,255,0.18),rgba(123,111,255,0.07));
+    border:1px solid rgba(123,111,255,0.3);border-radius:3px;
+    padding:1px 7px;font-size:10.5px;color:var(--accent);font-weight:600;
+    box-shadow:0 2px 4px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ─── ボタン ─── */
+.btn{
+    width:100%;font-family:var(--font-ui);
+    font-size:13px;font-weight:700;letter-spacing:2.5px;
+    text-transform:uppercase;color:#fff;
+    background:linear-gradient(180deg,rgba(123,111,255,0.75),rgba(123,111,255,0.45));
+    border:1px solid rgba(123,111,255,0.5);border-radius:6px;
+    padding:12px 8px;cursor:pointer;transition:all .2s;
+    box-shadow:0 3px 16px rgba(123,111,255,0.25),inset 0 1px 0 rgba(255,255,255,0.1);
+    position:relative;overflow:hidden;
+}
+.btn::after{
+    content:'';position:absolute;top:0;left:-110%;width:60%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent);
+    transition:left .45s;
+}
+.btn:hover{box-shadow:0 4px 28px rgba(123,111,255,0.45);border-color:rgba(123,111,255,0.7);transform:translateY(-1px);}
+.btn:hover::after{left:150%;}
+.btn:active{transform:translateY(0);}
+
+/* ─── ゲームオーバーオーバレイ ─── */
+.overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.78);backdrop-filter:blur(5px);
+    z-index:100;justify-content:center;align-items:center;
+}
+.overlay.show{display:flex;}
+#goCanvas{position:absolute;inset:0;pointer-events:none;}
+/* 紙吹雪キャンバス */
+#confCanvas{position:fixed;inset:0;z-index:103;pointer-events:none;}
+
+.overlay__card{
+    position:relative;z-index:2;
+    background:linear-gradient(180deg,rgba(16,14,32,0.97),rgba(10,10,18,0.98));
+    border:1px solid rgba(123,111,255,0.35);border-radius:14px;
+    padding:36px 44px 40px;text-align:center;
+    box-shadow:0 0 80px rgba(123,111,255,0.15),0 20px 60px rgba(0,0,0,0.4);
+    animation:card-in .35s cubic-bezier(.22,.6,.3,1);
+}
+@keyframes card-in{from{opacity:0;transform:scale(.88) translateY(24px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.overlay__title{
+    font-family:var(--font-title);font-size:42px;letter-spacing:8px;color:#ff4d6a;
+    text-shadow:0 0 20px rgba(255,77,106,0.55),0 0 60px rgba(255,77,106,0.2);
+    margin-bottom:2px;
+}
+.overlay__sub{font-size:11px;letter-spacing:4px;color:var(--text-dim);text-transform:uppercase;margin-bottom:16px;font-weight:500;}
+
+/* 新規レコード横幅バナー */
+.overlay__new-record{
+    display:none;
+    font-family:var(--font-title);font-size:20px;letter-spacing:5px;
+    color:var(--gold);text-shadow:0 0 14px rgba(255,215,0,0.6);
+    margin-bottom:12px;animation:record-pop .5s cubic-bezier(.2,.8,.3,1);
+}
+.overlay__new-record.show{display:block;}
+@keyframes record-pop{
+    0%{opacity:0;transform:scale(0.7)}
+    60%{opacity:1;transform:scale(1.06)}
+    100%{opacity:1;transform:scale(1)}
+}
+
+.overlay__divider{width:60px;height:1px;margin:0 auto 18px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.overlay__score-label{font-size:10px;letter-spacing:3px;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px;font-weight:600;}
+.overlay__score-value{
+    font-family:var(--font-title);font-size:54px;color:#fff;
+    text-shadow:0 0 24px rgba(123,111,255,0.55);margin-bottom:20px;letter-spacing:2px;
+}
+/* 新規レコード時スコア色変え */
+.overlay__score-value.is-record{
+    color:var(--gold);
+    text-shadow:0 0 24px rgba(255,215,0,0.6);
+}
+
+/* ─── ランキングテーブル ─── */
+.ranking{width:100%;margin-bottom:22px;}
+.ranking__row{
+    display:flex;align-items:center;gap:8px;
+    padding:4px 8px;border-radius:4px;
+}
+.ranking__row:nth-child(odd){background:rgba(123,111,255,0.055);}
+.ranking__row.is-new{
+    background:rgba(255,215,0,0.1);
+    border:1px solid rgba(255,215,0,0.22);
+}
+.ranking__rank{
+    font-family:var(--font-title);font-size:15px;
+    width:22px;text-align:center;color:var(--text-dim);flex-shrink:0;
+}
+.ranking__row:nth-child(1) .ranking__rank{color:var(--gold);text-shadow:0 0 6px rgba(255,215,0,0.5);}
+.ranking__row:nth-child(2) .ranking__rank{color:#c0c0c0;}
+.ranking__row:nth-child(3) .ranking__rank{color:#cd7f32;}
+.ranking__score{
+    font-family:var(--font-title);font-size:17px;
+    color:#fff;flex:1;text-align:right;letter-spacing:1px;
+}
+.ranking__row.is-new .ranking__score{color:var(--gold);text-shadow:0 0 8px rgba(255,215,0,0.4);}
+.ranking__row.is-new .ranking__rank{color:var(--gold);}
+.ranking__empty{color:var(--text-dim);font-size:13px;}
+
+.overlay__btn{
+    display:inline-block;font-family:var(--font-ui);
+    font-size:13px;font-weight:700;letter-spacing:3px;
+    text-transform:uppercase;color:#fff;
+    background:linear-gradient(180deg,rgba(123,111,255,0.75),rgba(123,111,255,0.45));
+    border:1px solid rgba(123,111,255,0.5);border-radius:6px;
+    padding:13px 38px;cursor:pointer;
+    box-shadow:0 3px 20px rgba(123,111,255,0.3);transition:all .2s;
+    position:relative;overflow:hidden;
+}
+.overlay__btn::after{
+    content:'';position:absolute;top:0;left:-110%;width:60%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.14),transparent);transition:left .45s;
+}
+.overlay__btn:hover{box-shadow:0 4px 32px rgba(123,111,255,0.5);transform:translateY(-1px);}
+.overlay__btn:hover::after{left:150%;}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<canvas id="confCanvas"></canvas>
+<div class="crt-vignette"></div>
+<div class="crt-line"></div>
+
+<div class="wrapper">
+    <!-- 左パネル -->
+    <div class="side">
+        <div class="card">
+            <div class="card__label">Hold</div>
+            <div class="card__canvas-wrap" id="holdWrap"><canvas id="hold" width="120" height="90"></canvas></div>
+        </div>
+        <div class="card card--best">
+            <div class="card__label">Best</div>
+            <div class="card__val" id="bestScore">0</div>
+        </div>
+        <div class="card"><div class="card__label">Score</div><div class="card__val" id="score">0</div></div>
+        <div class="card"><div class="card__label">Level</div><div class="card__val" id="level">1</div></div>
+        <div class="card"><div class="card__label">Lines</div><div class="card__val" id="lines">0</div></div>
+        <div class="ctrl">
+            <div class="ctrl__title">Controls</div>
+            <div class="ctrl__row"><span class="ctrl__key">← →</span><span>Move</span></div>
+            <div class="ctrl__row"><span class="ctrl__key">↑  X</span><span>Rotate R</span></div>
+            <div class="ctrl__row"><span class="ctrl__key">Z</span><span>Rotate L</span></div>
+            <div class="ctrl__row"><span class="ctrl__key">↓</span><span>Soft Drop</span></div>
+            <div class="ctrl__row"><span class="ctrl__key">SPC</span><span>Hard Drop</span></div>
+            <div class="ctrl__row"><span class="ctrl__key">C</span><span>Hold</span></div>
+            <div class="ctrl__row"><span class="ctrl__key">P</span><span>Pause</span></div>
+        </div>
+        <button id="startBtn" class="btn">Start Game</button>
+        <button id="pauseBtn" class="btn" style="display:none">Pause</button>
+    </div>
+
+    <!-- ボード中央 -->
+    <div class="board-wrap">
+        <div class="title-wrap"><div class="title">TETRIS</div></div>
+        <div class="frame-outer">
+            <div class="corner corner--tl"></div>
+            <div class="corner corner--tr"></div>
+            <div class="corner corner--bl"></div>
+            <div class="corner corner--br"></div>
+            <div class="frame-inner">
+                <canvas id="tetris" width="300" height="600"></canvas>
+                <div class="scanlines"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右パネル -->
+    <div class="side">
+        <div class="card">
+            <div class="card__label">Next</div>
+            <div class="card__canvas-wrap"><canvas id="next" width="120" height="90"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- ゲームオーバー -->
+<div class="overlay" id="gameOver">
+    <canvas id="goCanvas"></canvas>
+    <div class="overlay__card">
+        <div class="overlay__title">GAME OVER</div>
+        <div class="overlay__sub">Better luck next time</div>
+        <div class="overlay__new-record" id="newRecordBanner">★ NEW RECORD ★</div>
+        <div class="overlay__divider"></div>
+        <div class="overlay__score-label">Final Score</div>
+        <div class="overlay__score-value" id="finalScore">0</div>
+        <div class="ranking" id="rankingList"></div>
+        <button class="overlay__btn" id="restartBtn">Play Again</button>
+    </div>
+</div>
+
+<script>
+(() => {
+// ═══════════════════════════════════════════
+//  ハイスコア管理（localStorage Top 5）
+// ═══════════════════════════════════════════
+const HS_KEY = 'tetris_highscores';
+function loadScores(){
+    try{ return JSON.parse(localStorage.getItem(HS_KEY))||[]; }
+    catch(e){ return []; }
+}
+function saveScores(arr){ localStorage.setItem(HS_KEY, JSON.stringify(arr.slice(0,5))); }
+// スコアを追加し、順位(-1=ランクアイン外)を返す
+function addScore(s){
+    const arr = loadScores();
+    arr.push(s);
+    arr.sort((a,b)=>b-a);
+    const top5 = arr.slice(0,5);
+    saveScores(top5);
+    const idx = top5.indexOf(s);
+    // 同値が複数ある場合は末尾側にする
+    for(let i=top5.length-1;i>=0;i--){ if(top5[i]===s) return i; }
+    return idx;
+}
+
+// ═══════════════════════════════════════════
+//  背景パーティクル
+// ═══════════════════════════════════════════
+const bgC=document.getElementById('bgCanvas'),bgX=bgC.getContext('2d');
+let pts=[];
+function rsz(){bgC.width=innerWidth;bgC.height=innerHeight;}
+rsz();addEventListener('resize',rsz);
+
+class BP{
+    constructor(){this.reset();}
+    reset(){
+        this.x=Math.random()*bgC.width;this.y=Math.random()*bgC.height;
+        this.r=Math.random()*1.6+0.5;this.vy=Math.random()*0.35+0.1;
+        this.vx=(Math.random()-.5)*.12;this.o=Math.random()*.45+.12;
+        this.h=Math.random()<.6?248+Math.random()*18:178+Math.random()*28;
+    }
+    tick(){this.y+=this.vy;this.x+=this.vx;if(this.y>bgC.height)this.reset();if(this.x<0||this.x>bgC.width)this.vx*=-1;}
+    draw(){
+        bgX.save();bgX.globalAlpha=this.o;
+        bgX.shadowColor=`hsl(${this.h},78%,58%)`;bgX.shadowBlur=5;
+        bgX.fillStyle=`hsl(${this.h},78%,62%)`;
+        bgX.beginPath();bgX.arc(this.x,this.y,this.r,0,Math.PI*2);bgX.fill();bgX.restore();
+    }
+}
+for(let i=0;i<72;i++)pts.push(new BP());
+(function loop(){bgX.clearRect(0,0,bgC.width,bgC.height);pts.forEach(p=>{p.tick();p.draw();});requestAnimationFrame(loop);})();
+
+// ═══════════════════════════════════════════
+//  GO パーティクル
+// ═══════════════════════════════════════════
+const goC=document.getElementById('goCanvas'),goX=goC.getContext('2d');
+let goPs=[],goOn=false;
+function rszGo(){goC.width=innerWidth;goC.height=innerHeight;}
+rszGo();addEventListener('resize',rszGo);
+const BLK_CLR=['#00f0f0','#f0f000','#a000f0','#00f000','#f00000','#4080ff','#f0a000'];
+
+class GP{
+    constructor(){
+        this.x=Math.random()*goC.width;this.y=-30-Math.random()*200;
+        this.s=13+Math.random()*17;this.vy=1.1+Math.random()*2.4;
+        this.vx=(Math.random()-.5)*1.1;this.rot=Math.random()*Math.PI*2;
+        this.rs=(Math.random()-.5)*.09;
+        this.c=BLK_CLR[Math.floor(Math.random()*BLK_CLR.length)];this.o=.65+Math.random()*.35;
+    }
+    tick(){this.y+=this.vy;this.x+=this.vx;this.rot+=this.rs;this.vy+=.024;}
+    draw(){
+        goX.save();goX.translate(this.x,this.y);goX.rotate(this.rot);
+        goX.globalAlpha=this.o;goX.fillStyle=this.c;goX.shadowColor=this.c;goX.shadowBlur=7;
+        goX.fillRect(-this.s/2,-this.s/2,this.s,this.s);goX.restore();
+    }
+}
+function startGO(){
+    goPs=[];
+    for(let i=0;i<42;i++)goPs.push(new GP());
+    goOn=true;
+    (function a(){
+        if(!goOn){
+            goX.clearRect(0,0,goC.width,goC.height); // 停止時にクリア
+            return;
+        }
+        goX.clearRect(0,0,goC.width,goC.height);
+        goPs.forEach(p=>{
+            p.tick();p.draw();
+            if(p.y>goC.height+60){
+                p.y=-30-Math.random()*100;
+                p.x=Math.random()*goC.width;
+                p.vy=1.1+Math.random()*2;
+            }
+        });
+        requestAnimationFrame(a);
+    })();
+}
+
+// ═══════════════════════════════════════════
+//  紙吹雪パーティクル（新規レコード用）
+// ═══════════════════════════════════════════
+const cfC=document.getElementById('confCanvas'),cfX=cfC.getContext('2d');
+let cfPs=[],cfOn=false;
+function rszCf(){cfC.width=innerWidth;cfC.height=innerHeight;}
+rszCf();addEventListener('resize',rszCf);
+const CF_COLORS=['#ffd700','#ff6b6b','#7b6fff','#00e5ff','#fff','#ffaa00','#a855f7'];
+
+class CP{
+    constructor(){
+        this.x=Math.random()*cfC.width;this.y=-20-Math.random()*cfC.height*.4;
+        this.w=3+Math.random()*5;this.h=this.w*(.4+Math.random()*.6);
+        this.vy=2+Math.random()*3.5;this.vx=(Math.random()-.5)*2.5;
+        this.rot=Math.random()*Math.PI*2;this.rs=(Math.random()-.5)*.18;
+        this.c=CF_COLORS[Math.floor(Math.random()*CF_COLORS.length)];
+        this.o=.8+Math.random()*.2;this.life=1;
+    }
+    tick(){
+        this.y+=this.vy;this.x+=this.vx;this.rot+=this.rs;
+        this.vy+=0.04;this.vx*=0.995;
+        this.life-=0.005;
+    }
+    draw(){
+        cfX.save();cfX.translate(this.x,this.y);cfX.rotate(this.rot);
+        cfX.globalAlpha=this.o*Math.max(0,this.life);
+        cfX.fillStyle=this.c;cfX.fillRect(-this.w/2,-this.h/2,this.w,this.h);
+        cfX.restore();
+    }
+}
+function startConfetti(){
+    cfPs=[];cfOn=true;
+    // 最初に大量に放出
+    for(let i=0;i<120;i++) cfPs.push(new CP());
+    (function a(){
+        if(!cfOn){
+            cfX.clearRect(0,0,cfC.width,cfC.height); // 停止時にクリア
+            return;
+        }
+        cfX.clearRect(0,0,cfC.width,cfC.height);
+        // 最初1秒間は毎フレームパーティクルを追加
+        if(cfPs.length<200 && cfPs.some(p=>p.life>0.8)) cfPs.push(new CP());
+        cfPs.forEach(p=>{p.tick();p.draw();});
+        // 全てが画面外に出たら停止
+        if(cfPs.every(p=>p.y>cfC.height||p.life<=0)){
+            cfOn=false;
+            cfX.clearRect(0,0,cfC.width,cfC.height);
+            return;
+        }
+        requestAnimationFrame(a);
+    })();
+}
+
+// ═══════════════════════════════════════════
+//  ゲームコア
+// ═══════════════════════════════════════════
+const canvas=document.getElementById('tetris'),ctx=canvas.getContext('2d');
+const nxC=document.getElementById('next'),nxX=nxC.getContext('2d');
+const hdC=document.getElementById('hold'),hdX=hdC.getContext('2d');
+
+const R=20,C=10,B=30;
+const CLR=[null,'#00f0f0','#f0f000','#a000f0','#00f000','#f00000','#4080ff','#f0a000'];
+const LT=[null,'#66ffff','#ffff66','#d466ff','#66ff66','#ff6666','#80b0ff','#ffcc66'];
+const DK=[null,'#006666','#666600','#440066','#006600','#660000','#1a3d80','#664400'];
+const GL=[null,'rgba(0,240,240,.48)','rgba(240,240,0,.48)','rgba(160,0,240,.48)','rgba(0,240,0,.48)','rgba(240,0,0,.48)','rgba(64,128,255,.48)','rgba(240,160,0,.48)'];
+
+const KJ=[[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],[[0,0],[1,0],[1,-1],[0,2],[1,2]],[[0,0],[1,0],[1,1],[0,-2],[1,-2]],[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]]];
+const KI=[[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],[[0,0],[1,0],[-2,0],[1,-2],[-2,1]]];
+
+const SH=[
+    [],
+    [[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],[[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],[[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],[[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]],
+    [[[2,2],[2,2]],[[2,2],[2,2]],[[2,2],[2,2]],[[2,2],[2,2]]],
+    [[[0,3,0],[3,3,3],[0,0,0]],[[0,3,0],[0,3,3],[0,3,0]],[[0,0,0],[3,3,3],[0,3,0]],[[0,3,0],[3,3,0],[0,3,0]]],
+    [[[0,4,4],[4,4,0],[0,0,0]],[[0,4,0],[0,4,4],[0,0,4]],[[0,0,0],[0,4,4],[4,4,0]],[[4,0,0],[4,4,0],[0,4,0]]],
+    [[[5,5,0],[0,5,5],[0,0,0]],[[0,0,5],[0,5,5],[0,5,0]],[[0,0,0],[5,5,0],[0,5,5]],[[0,5,0],[5,5,0],[5,0,0]]],
+    [[[6,0,0],[6,6,6],[0,0,0]],[[0,6,6],[0,6,0],[0,6,0]],[[0,0,0],[6,6,6],[0,0,6]],[[0,6,0],[0,6,0],[6,6,0]]],
+    [[[0,0,7],[7,7,7],[0,0,0]],[[0,7,0],[0,7,0],[0,7,7]],[[0,0,0],[7,7,7],[7,0,0]],[[7,7,0],[0,7,0],[0,7,0]]]
+];
+
+let board,cur,nxt,hld,canHld,score,level,lines,combo;
+let goFlag,paused,dCnt,dInt,lTime,pScore,pLevel;
+
+const scoreEl=document.getElementById('score'),levelEl=document.getElementById('level'),linesEl=document.getElementById('lines');
+const bestEl=document.getElementById('bestScore');
+const startBtn=document.getElementById('startBtn'),pauseBtn=document.getElementById('pauseBtn');
+const restartBtn=document.getElementById('restartBtn');
+const goEl=document.getElementById('gameOver'),finEl=document.getElementById('finalScore');
+const newRecordBanner=document.getElementById('newRecordBanner');
+const rankingList=document.getElementById('rankingList');
+const holdWrap=document.getElementById('holdWrap');
+const frameInner=document.querySelector('.frame-inner');
+
+// 起動時にベストスコア表示
+bestEl.textContent = loadScores()[0] || 0;
+
+function createBoard(){board=Array.from({length:R},()=>Array(C).fill(0));}
+
+// 3Dベベルブロック
+function db(c,px,py,v,a=1){
+    c.save();c.globalAlpha=a;
+    c.shadowColor=GL[v];c.shadowBlur=11;
+    c.fillStyle=CLR[v];c.fillRect(px+1,py+1,B-2,B-2);c.restore();
+    c.save();c.globalAlpha=a;
+    c.fillStyle=CLR[v];c.fillRect(px+1,py+1,B-2,B-2);
+    c.fillStyle=LT[v];c.globalAlpha=a*.42;c.fillRect(px+1,py+1,B-2,3);
+    c.fillStyle=LT[v];c.globalAlpha=a*.28;c.fillRect(px+1,py+1,3,B-2);
+    c.fillStyle=DK[v];c.globalAlpha=a*.48;c.fillRect(px+1,py+B-4,B-2,3);
+    c.fillStyle=DK[v];c.globalAlpha=a*.38;c.fillRect(px+B-4,py+1,3,B-2);
+    c.fillStyle='rgba(255,255,255,0.06)';c.globalAlpha=a;c.fillRect(px+4,py+4,B-10,B-10);
+    c.restore();
+}
+
+class Piece{
+    constructor(t){this.t=t;this.rot=0;this.shape=SH[t][0];this.x=Math.floor(C/2)-Math.floor(this.shape[0].length/2);this.y=0;}
+    draw(c,ox=0,oy=0,a=1){this.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v)db(c,(this.x+x+ox)*B,(this.y+y+oy)*B,v,a);}));}
+    drawAt(c,cw,ch){
+        const cols=this.shape[0].length,rows=this.shape.length;
+        const ox=(cw/B-cols)/2,oy=(ch/B-rows)/2;
+        this.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v)db(c,(x+ox)*B,(y+oy)*B,v);}));
+    }
+    move(d){this.x+=d;if(this.col()){this.x-=d;return false;}return true;}
+    rotate(d=1){
+        const p=this.rot;this.rot=(this.rot+d+4)%4;const ps=this.shape;this.shape=SH[this.t][this.rot];
+        const ks=this.t===1?KI:KJ;
+        for(const k of ks[p]){this.x+=k[0];this.y+=k[1];if(!this.col())return true;this.x-=k[0];this.y-=k[1];}
+        this.rot=p;this.shape=ps;return false;
+    }
+    drop(){this.y++;if(this.col()){this.y--;return false;}return true;}
+    hardDrop(){let n=0;while(this.drop())n++;return n;}
+    ghostY(){const o=this.y;while(true){this.y++;if(this.col()){this.y--;break;}}const g=this.y;this.y=o;return g;}
+    col(){
+        for(let y=0;y<this.shape.length;y++)for(let x=0;x<this.shape[y].length;x++){
+            if(!this.shape[y][x])continue;const nx=this.x+x,ny=this.y+y;
+            if(nx<0||nx>=C||ny>=R)return true;if(ny>=0&&board[ny][nx])return true;
+        }return false;
+    }
+    merge(){this.shape.forEach((r,y)=>r.forEach((v,x)=>{if(!v)return;const by=this.y+y,bx=this.x+x;if(by>=0&&by<R&&bx>=0&&bx<C)board[by][bx]=v;}));}
+}
+
+function rnd(){return new Piece(Math.floor(Math.random()*7)+1);}
+function getNext(){if(!nxt)nxt=rnd();cur=nxt;nxt=rnd();canHld=true;holdWrap.classList.remove('locked');drawNext();}
+function holdPiece(){
+    if(!canHld||!cur)return;
+    if(!hld){hld=new Piece(cur.t);getNext();}
+    else{const t=new Piece(hld.t);hld=new Piece(cur.t);cur=t;}
+    canHld=false;holdWrap.classList.add('locked');drawHold();
+}
+
+function drawBoard(){
+    ctx.fillStyle='#0b0b14';ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle='rgba(123,111,255,0.04)';ctx.lineWidth=1;
+    for(let i=0;i<=C;i++){ctx.beginPath();ctx.moveTo(i*B,0);ctx.lineTo(i*B,canvas.height);ctx.stroke();}
+    for(let i=0;i<=R;i++){ctx.beginPath();ctx.moveTo(0,i*B);ctx.lineTo(canvas.width,i*B);ctx.stroke();}
+    board.forEach((r,y)=>r.forEach((v,x)=>{if(v)db(ctx,x*B,y*B,v);}));
+    if(cur&&!paused){const gy=cur.ghostY(),oy=cur.y;cur.y=gy;cur.draw(ctx,0,0,.17);cur.y=oy;}
+}
+function drawNext(){nxX.fillStyle='#0b0b14';nxX.fillRect(0,0,nxC.width,nxC.height);if(nxt)nxt.drawAt(nxX,nxC.width,nxC.height);}
+function drawHold(){hdX.fillStyle='#0b0b14';hdX.fillRect(0,0,hdC.width,hdC.height);if(hld)hld.drawAt(hdX,hdC.width,hdC.height);}
+
+function flashLine(row){const e=document.createElement('div');e.className='line-flash';e.style.top=(row*B)+'px';frameInner.appendChild(e);setTimeout(()=>e.remove(),400);}
+function flashLvl(){const e=document.createElement('div');e.className='level-flash';document.body.appendChild(e);setTimeout(()=>e.remove(),600);}
+function pop(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
+
+function clearLines(){
+    let toFlash=[];
+    for(let y=R-1;y>=0;y--)if(board[y].every(c=>c!==0))toFlash.push(y);
+    toFlash.forEach(r=>flashLine(r));
+    let cleared=0;
+    for(let y=R-1;y>=0;y--){if(board[y].every(c=>c!==0)){board.splice(y,1);board.unshift(Array(C).fill(0));cleared++;y++;}}
+    if(cleared>0){
+        lines+=cleared;combo++;
+        const base=[0,100,300,500,800];
+        let pts=base[cleared]*level;if(combo>0)pts+=50*combo*level;
+        score+=pts;
+        const nl=Math.floor(lines/10)+1;
+        if(nl>level){level=nl;dInt=Math.max(80,1000-(level-1)*55);flashLvl();}
+        updateStats();
+    }else{combo=-1;}
+}
+
+function updateStats(){
+    scoreEl.textContent=score;levelEl.textContent=level;linesEl.textContent=lines;
+    if(score!==pScore){pop(scoreEl);pScore=score;}
+    if(level!==pLevel){pop(levelEl);pLevel=level;}
+}
+
+// ─── ランキング表示 ───
+function renderRanking(newIdx){
+    const scores = loadScores();
+    rankingList.innerHTML='';
+    for(let i=0;i<5;i++){
+        const row=document.createElement('div');
+        row.className='ranking__row'+(i===newIdx?' is-new':'');
+        if(scores[i]!=null){
+            row.innerHTML=`<span class="ranking__rank">${i+1}</span><span class="ranking__score">${scores[i].toLocaleString()}</span>`;
+        } else {
+            row.innerHTML=`<span class="ranking__rank">${i+1}</span><span class="ranking__score ranking__empty">---</span>`;
+        }
+        rankingList.appendChild(row);
+    }
+}
+
+// ─── ゲームオーバー ───
+function endGame(){
+    goFlag=true;
+    pauseBtn.style.display='none';
+
+    // ハイスコア判定
+    const rankIdx = addScore(score);
+    const isRecord = (rankIdx === 0); // 1位
+
+    // ベストスコア更新
+    bestEl.textContent = loadScores()[0] || 0;
+
+    // スコア表示
+    finEl.textContent = score.toLocaleString();
+    finEl.classList.toggle('is-record', isRecord);
+
+    // 新規レコードバナー
+    newRecordBanner.classList.remove('show');
+    void newRecordBanner.offsetWidth;
+    if(isRecord && score > 0){
+        newRecordBanner.classList.add('show');
+        startConfetti(); // 紙吹雪
+    }
+
+    // ランキング描画
+    renderRanking(rankIdx);
+
+    goEl.classList.add('show');
+    startGO();
+}
+
+function loop(t=0){
+    if(goFlag||paused){if(!goFlag)requestAnimationFrame(loop);return;}
+    const dt=t-lTime;lTime=t;dCnt+=dt;
+    if(dCnt>dInt){if(cur&&!cur.drop()){cur.merge();clearLines();getNext();if(cur.col()){endGame();return;}}dCnt=0;}
+    drawBoard();if(cur)cur.draw(ctx);requestAnimationFrame(loop);
+}
+
+function startGame(){
+    createBoard();score=0;level=1;lines=0;combo=-1;pScore=0;pLevel=1;
+    goFlag=false;paused=false;dCnt=0;dInt=1000;
+    nxt=null;hld=null;canHld=true;holdWrap.classList.remove('locked');
+    updateStats();getNext();drawHold();
+    goEl.classList.remove('show');
+    // パーティクルキャンバスを停止してクリア
+    goOn=false;
+    cfOn=false;
+    setTimeout(()=>{
+        goX.clearRect(0,0,goC.width,goC.height);
+        cfX.clearRect(0,0,cfC.width,cfC.height);
+    }, 50);
+    startBtn.style.display='none';pauseBtn.style.display='block';
+    lTime=0;requestAnimationFrame(loop);
+}
+function togglePause(){paused=!paused;pauseBtn.textContent=paused?'Resume':'Pause';if(!paused){lTime=performance.now();requestAnimationFrame(loop);}}
+
+document.addEventListener('keydown',e=>{
+    if(goFlag||!cur)return;
+    switch(e.key){
+        case 'ArrowLeft':e.preventDefault();if(!paused)cur.move(-1);break;
+        case 'ArrowRight':e.preventDefault();if(!paused)cur.move(1);break;
+        case 'ArrowDown':e.preventDefault();if(!paused&&cur.drop()){score+=1;updateStats();dCnt=0;}break;
+        case 'ArrowUp':case 'x':case 'X':e.preventDefault();if(!paused)cur.rotate(1);break;
+        case 'z':case 'Z':e.preventDefault();if(!paused)cur.rotate(-1);break;
+        case 'c':case 'C':case 'Shift':e.preventDefault();if(!paused)holdPiece();break;
+        case ' ':e.preventDefault();if(!paused){const d=cur.hardDrop();score+=d*2;updateStats();cur.merge();clearLines();getNext();if(cur.col())endGame();dCnt=0;}break;
+        case 'p':case 'P':e.preventDefault();togglePause();break;
+    }
+});
+
+startBtn.addEventListener('click',startGame);
+pauseBtn.addEventListener('click',togglePause);
+restartBtn.addEventListener('click',startGame);
+
+createBoard();drawBoard();drawNext();drawHold();
+})();
+</script>
+</body>
+</html>
