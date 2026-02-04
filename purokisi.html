@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>隠しページ</title>
-
   <style>
     :root {
       --bg: #ffffff;
@@ -37,52 +36,21 @@
       transition: 0.3s;
     }
 
-    .header {
-      height: 56px;
-      background: var(--bg);
-      padding: 0 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 18px;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-
-    .header-controls {
-      display: flex;
-      gap: 10px;
-    }
-
-    .header button,
-    .themeBtn {
-      background: var(--button-bg);
-      border: 1px solid var(--border);
-      color: var(--button-text);
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.25s;
-    }
-
-    .header button:hover,
-    .themeBtn:hover {
-      background: var(--border);
-    }
-
     .menu {
-      padding: 20px;
-      overflow-y: auto;
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
     }
 
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 30px;
+      width: 100%;
       max-width: 1100px;
-      margin: 20px auto 0;
+      margin: 0 auto;
+      margin-top: 20px;
     }
 
     .item {
@@ -115,127 +83,65 @@
 
     iframe {
       width: 100%;
-      height: calc(100vh - 56px);
+      height: 100%;
       border: none;
       display: none;
     }
+
+    .themeBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--button-bg);
+      border: 1px solid var(--border);
+      color: var(--button-text);
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.25s;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    .themeBtn:hover {
+      background: var(--border);
+    }
   </style>
 </head>
-
 <body>
-  <div class="header">
-    <span>隠しページ</span>
-    <div class="header-controls">
-      <button onclick="goBack()">戻る</button>
-      <button class="themeBtn" onclick="toggleTheme()">ライト</button>
-    </div>
-  </div>
 
   <div class="menu" id="menu">
-    <p style="text-align:center; margin-bottom: 30px;">
-      チャットサイトはサーバーの関係上起動が遅いです。
-    </p>
-
-    <!-- ⑤はそのまま残しています -->
-    <p>Googleアカウント捨て垢作った　メアドdainozu772@gmail.com パスワードdainozu1919</p>
-    <p>一番機能少ない x.gd/google02 普通 x.gd/google022 一番機能多い x.gd/google777</p>
+    <p style="text-align:center; margin-bottom: 30px;">サイトを開くボタンです。</p>
 
     <div class="grid">
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://x.gd/purokisishadow')">
-          インターテスラー
-        </button>
-        <div class="desc">1/29 動作確認済み</div>
-      </div>
 
       <div class="item">
-        <button class="btn-site" onclick="openSite('https://int.rren.ch/')">
-          インターテスラー2
-        </button>
-        <div class="desc">1/29 動作確認済み</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://playernation.canalspa.cl/')">
-          プロキシ1
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://gov.orion-stella.com/s.html')">
-          プロキシ2
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://rooms.hotelconsuladoinn.com/onboarding/')">
-          プロキシ3
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://vcsa.national-birdshow.com/')">
-          プロキシ4
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://eglobaleducation.com/')">
-          プロキシ5
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://penguin-perfect.land.dragonfruit.su/')">
-          utopia1
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://studysheets.justlearning.net/')">
-          utopia2
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://ja3dery.chickenkiller.com/')">
-          utopia3
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://calculator.hotelconsuladoinn.com/')">
-          utopia4
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
+        <button class="btn-site" onclick="openSite('https://gakkoubenkyou.onapon.com')">インターテスラー1</button>
+        <div class="desc">プロキシ</div>
       </div>
       
       <div class="item">
-        <button class="btn-site" onclick="openSite('gakkoubenkyou.styledcomputing.com')">
-          今後プロキシ
-        </button>
-        <div class="desc">1/30追加 動作未確認</div>
-      	
+        <button class="btn-site" onclick="openSite('https://int.rren.ch/')">インターテスラー2</button>
+        <div class="desc">プロキシ</div>
+      </div>
+      
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://x.gd/purokisishadow')">インターテスラー3</button>
+        <div class="desc">プロキシ</div>
+      </div>
+
+      <div class="item">
+        <button class="btn-site" onclick="openSite('https://eglobaleducation.com/')">プロキシ</button>
+        <div class="desc">あんまり</div>
+      </div>
+
     </div>
   </div>
 
   <iframe id="iframe"></iframe>
 
-  <script>
-    function goBack() {
-      document.getElementById("iframe").style.display = "none";
-      document.getElementById("iframe").src = "";
-      document.getElementById("menu").style.display = "block";
-    }
+  <button class="themeBtn" onclick="toggleTheme()">ライト</button>
 
+  <script>
     function openSite(url) {
       const iframe = document.getElementById("iframe");
       document.getElementById("menu").style.display = "none";
@@ -246,17 +152,18 @@
     function toggleTheme() {
       document.body.classList.toggle("dark");
       const isDark = document.body.classList.contains("dark");
-      document.querySelector(".themeBtn").textContent =
-        isDark ? "ダーク" : "ライト";
+      document.querySelector(".themeBtn").textContent = isDark ? "ダーク" : "ライト";
       localStorage.setItem("theme_peji", isDark ? "dark" : "light");
     }
 
     window.onload = () => {
-      if (localStorage.getItem("theme_peji") === "dark") {
+      const saved = localStorage.getItem("theme_peji");
+      if (saved === "dark") {
         document.body.classList.add("dark");
         document.querySelector(".themeBtn").textContent = "ダーク";
       }
     };
   </script>
+
 </body>
 </html>
