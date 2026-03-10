@@ -245,13 +245,22 @@ function doSearch() {
   return false;
 }
 
-// Ctrl+Q で peji.html を開く
+// Ctrl+Q で peji.html を開閉（リセットなし）
 document.addEventListener("keydown", function(e) {
   if (e.ctrlKey && e.key === "q") {
     e.preventDefault();
     const frame = document.getElementById("hiddenFrame");
-    frame.style.display = "block";
-    frame.src = "peji.html";
+
+    if (frame.style.display === "block") {
+      // 開いている → 隠す（srcはリセットしない）
+      frame.style.display = "none";
+    } else {
+      // 閉じている → 開く
+      frame.style.display = "block";
+      if (!frame.src || frame.src === "about:blank" || frame.src === "") {
+        frame.src = "peji.html";
+      }
+    }
   }
 });
 </script>
