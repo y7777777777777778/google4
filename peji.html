@@ -126,7 +126,8 @@
   <div class="header">
     <span>隠しページ</span>
     <div class="header-controls">
-      <button onclick="goBack()">戻る</button>
+      <button onclick="goHome()">ホーム</button>
+      <button onclick="hidePanel()">隠す</button>
       <button class="themeBtn" onclick="toggleTheme()">ライト</button>
     </div>
   </div>
@@ -220,25 +221,22 @@
   <iframe id="iframe"></iframe>
 
   <script>
-    function goBack() {
+    // ホームに戻る（iframeを閉じてメニュー表示）
+    function goHome() {
       const iframe = document.getElementById("iframe");
       const menu = document.getElementById("menu");
+      iframe.style.display = "none";
+      iframe.src = "";
+      menu.style.display = "flex";
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.setOverlay(false);
+        }
+      } catch(e) {}
+    }
 
-      // iframeが開いていたらメニューに戻る
-      if (iframe.style.display === "block") {
-        iframe.style.display = "none";
-        iframe.src = "";
-        menu.style.display = "flex";
-        // 親のオーバーレイを外す
-        try {
-          if (window.parent && window.parent !== window) {
-            window.parent.setOverlay(false);
-          }
-        } catch(e) {}
-        return;
-      }
-
-      // メニュー表示中なら隠しページを閉じる
+    // 隠す（index.htmlのGoogle画面に戻す、リセットしない）
+    function hidePanel() {
       try {
         if (window.parent && window.parent !== window) {
           const frame = window.parent.document.getElementById("hiddenFrame");
@@ -248,9 +246,7 @@
             return;
           }
         }
-      } catch (e) {}
-
-      history.back();
+      } catch(e) {}
     }
 
     function openSite(url) {
@@ -258,8 +254,6 @@
       document.getElementById("menu").style.display = "none";
       iframe.style.display = "block";
       iframe.src = url;
-
-      // 外部サイト表示中はオーバーレイをON
       try {
         if (window.parent && window.parent !== window) {
           window.parent.setOverlay(true);
