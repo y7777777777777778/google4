@@ -115,7 +115,7 @@
 
     iframe {
       width: 100%;
-      height: 100%;
+      flex: 1;
       border: none;
       display: none;
     }
@@ -139,8 +139,6 @@
     <p>スカイメニュークラウド解除必須 Googleコピー追加</p>
 
     <div class="grid">
-
-
       <div class="item">
         <button class="btn-site"
           onclick="window.open('https://google4-zeta.vercel.app/','_blank')">
@@ -170,7 +168,6 @@
         <div class="desc">少し改良しました。</div>
       </div>
 
-      <!-- ★ ここが変更点（vercel版をiframe） -->
       <div class="item">
         <button class="btn-site"
           onclick="openSite('https://googlecom-seven.vercel.app/tetorisu.html')">
@@ -179,7 +176,7 @@
         <div class="desc">結構本格的なテトリスです</div>
       </div>
 
-            <div class="item">
+      <div class="item">
         <button class="btn-site"
           onclick="openSite('https://googlecom-seven.vercel.app/tetorisunew.html')">
           テトリス 新バージョン
@@ -187,17 +184,13 @@
         <div class="desc">CPU対戦付き</div>
       </div>
 
-
-
-
-            <div class="item">
+      <div class="item">
         <button class="btn-site"
           onclick="openSite('https://googlecom-seven.vercel.app/purokisi.html')">
           プロキシ
         </button>
         <div class="desc">プロキシ</div>
       </div>
-
 
       <div class="item">
         <button class="btn-site" onclick="openSite('pasuwa-do.html')">
@@ -221,8 +214,6 @@
         </button>
         <div class="desc">別タブで開きます</div>
       </div>
-
-
     </div>
   </div>
 
@@ -230,22 +221,34 @@
 
   <script>
     function goBack() {
+      const iframe = document.getElementById("iframe");
+      const menu = document.getElementById("menu");
+
+      // iframeが開いていたらメニューに戻る
+      if (iframe.style.display === "block") {
+        iframe.style.display = "none";
+        iframe.src = "";
+        menu.style.display = "flex";
+        // 親のオーバーレイを外す
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.setOverlay(false);
+          }
+        } catch(e) {}
+        return;
+      }
+
+      // メニュー表示中なら隠しページを閉じる
       try {
         if (window.parent && window.parent !== window) {
           const frame = window.parent.document.getElementById("hiddenFrame");
           if (frame) {
             frame.style.display = "none";
-            frame.src = "";
+            window.parent.setOverlay(false);
             return;
           }
         }
       } catch (e) {}
-
-      const ref = document.referrer;
-      if (ref.includes("index.html") || ref.endsWith("/")) {
-        location.href = "index.html";
-        return;
-      }
 
       history.back();
     }
@@ -255,6 +258,13 @@
       document.getElementById("menu").style.display = "none";
       iframe.style.display = "block";
       iframe.src = url;
+
+      // 外部サイト表示中はオーバーレイをON
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.setOverlay(true);
+        }
+      } catch(e) {}
     }
 
     function toggleTheme() {
@@ -264,6 +274,23 @@
         isDark ? "ダーク" : "ライト";
       localStorage.setItem("theme_peji", isDark ? "dark" : "light");
     }
+
+    // Ctrl+Q を親フレームに伝える
+    document.addEventListener("keydown", function(e) {
+      if (e.ctrlKey && e.key === "q") {
+        e.preventDefault();
+        try {
+          if (window.parent && window.parent !== window) {
+            const event = new KeyboardEvent("keydown", {
+              key: "q",
+              ctrlKey: true,
+              bubbles: true
+            });
+            window.parent.document.dispatchEvent(event);
+          }
+        } catch (err) {}
+      }
+    });
 
     window.onload = () => {
       const saved = localStorage.getItem("theme_peji");
