@@ -23,14 +23,21 @@ body{
 
 <div>認証に成功しました！</div>
 
-<audio id="bgm" src="https://files.catbox.moe/00hrk0.mp3"></audio>
+<audio id="bgm" src="https://files.catbox.moe/00hrk0.mp3" preload="auto"></audio>
 
 <script>
 window.onload = () => {
 
-  // 音楽再生
   const audio = document.getElementById("bgm");
-  audio.play().catch(()=>{});
+
+  // 自動再生対策
+  audio.muted = true;
+
+  audio.play().then(()=>{
+      audio.muted = false;
+  }).catch(()=>{
+      console.log("自動再生ブロック");
+  });
 
   // 5秒後ページ移動
   setTimeout(()=>{
