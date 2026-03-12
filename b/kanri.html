@@ -816,13 +816,22 @@
   const publicBar     = document.getElementById("publicModeBar");
   const publicDesc    = document.getElementById("publicModeDesc");
 
+  // トグル操作中フラグ（loadと競合防止）
+  let publicModeLoading = true;
+
   async function loadPublicMode() {
+    publicModeLoading = true;
     try {
       const snap = await getDoc(doc(db, "config", "publicMode"));
-      const val  = snap.exists() ? snap.data().value === true : false;
+      // ドキュメントが存在する場合のみ値を反映。存在しない場合はOFFのまま
+      const val = snap.exists() ? snap.data().value === true : false;
       publicToggle.checked = val;
       updatePublicModeUI(val);
-    } catch(e) { console.error(e); }
+    } catch(e) {
+      console.error("publicMode読み込みエラー:", e);
+    } finally {
+      publicModeLoading = false;
+    }
   }
 
   function updatePublicModeUI(isOn) {
@@ -836,14 +845,21 @@
   }
 
   publicToggle.addEventListener("change", async function() {
+    // ロード中の誤発火を無視
+    if (publicModeLoading) return;
     const isOn = publicToggle.checked;
+    // UIを即時反映
+    updatePublicModeUI(isOn);
     try {
-      await setDoc(doc(db, "config", "publicMode"), { key: "publicMode", value: isOn });
-      updatePublicModeUI(isOn);
+      // Firestoreに保存（merge:trueで他フィールドを消さない）
+      await setDoc(doc(db, "config", "publicMode"), { key: "publicMode", value: isOn }, { merge: true });
       showToast(isOn ? "🌐 一般公開モード ON" : "🔒 一般公開モード OFF", 3000);
     } catch(e) {
-      console.error(e);
-      publicToggle.checked = !isOn; // 失敗したら戻す
+      console.error("publicMode保存エラー:", e);
+      // 保存失敗したら元に戻す
+      publicToggle.checked = !isOn;
+      updatePublicModeUI(!isOn);
+      showToast("保存に失敗しました: " + e.message, 4000);
     }
   });
 
