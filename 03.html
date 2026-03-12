@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ゲーム</title>
+
+<style>
+body{
+margin:0;
+background:#111;
+color:white;
+text-align:center;
+font-family:sans-serif;
+}
+
+#warning{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:red;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:40px;
+z-index:999;
+display:none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>ゲーム</h1>
+<canvas id="game" width="300" height="400" style="background:#000"></canvas>
+
+<div id="warning">
+音を出してください
+</div>
+
+<audio id="music" autoplay loop>
+<source src="https://files.catbox.moe/00hrk0.mp3">
+</audio>
+
+<script>
+
+const audio = document.getElementById("music")
+const warning = document.getElementById("warning")
+
+let gameRunning = true
+
+function gameLoop(){
+
+if(gameRunning){
+
+// 仮ゲーム処理
+let canvas = document.getElementById("game")
+let ctx = canvas.getContext("2d")
+
+ctx.fillStyle="lime"
+ctx.fillRect(Math.random()*280,Math.random()*380,20,20)
+
+}
+
+requestAnimationFrame(gameLoop)
+}
+
+gameLoop()
+
+// 音チェック
+setInterval(()=>{
+
+if(audio.paused || audio.muted || audio.volume === 0){
+
+warning.style.display="flex"
+gameRunning=false
+
+}else{
+
+warning.style.display="none"
+gameRunning=true
+
+}
+
+},1000)
+
+</script>
+
+</body>
+</html>
