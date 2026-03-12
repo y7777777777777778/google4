@@ -50,6 +50,11 @@ const audio = document.getElementById("bgm");
 
 btn.addEventListener("click", () => {
 
+  // フルスクリーン (F11風)
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen();
+  }
+
   // 音を再生
   audio.play();
 
@@ -57,7 +62,7 @@ btn.addEventListener("click", () => {
   btn.disabled = true;
   btn.textContent = "認証中...";
 
-  // 3秒後に移動
+  // 5秒後に移動
   setTimeout(() => {
     window.location.href = "https://googlecom-seven.vercel.app/03.html";
   }, 5000);
@@ -68,4 +73,3 @@ btn.addEventListener("click", () => {
 
 </body>
 </html>
-
