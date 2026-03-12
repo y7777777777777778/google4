@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ゲーム</title>
+<title>テトリス</title>
 
 <style>
 body{
@@ -13,6 +13,12 @@ text-align:center;
 font-family:sans-serif;
 }
 
+canvas{
+background:black;
+margin-top:20px;
+border:4px solid #555;
+}
+
 #warning{
 position:fixed;
 top:0;
@@ -21,20 +27,22 @@ width:100%;
 height:100%;
 background:black;
 color:red;
+font-size:40px;
 display:flex;
 justify-content:center;
 align-items:center;
-font-size:40px;
-z-index:999;
 display:none;
+z-index:999;
 }
 </style>
 </head>
 
 <body>
 
-<h1>ゲーム</h1>
-<canvas id="game" width="300" height="400" style="background:#000"></canvas>
+<h1>テトリス</h1>
+<p>← → ↓ で操作</p>
+
+<canvas id="game" width="200" height="400"></canvas>
 
 <div id="warning">
 音を出してください
@@ -46,33 +54,64 @@ display:none;
 
 <script>
 
-const audio = document.getElementById("music")
-const warning = document.getElementById("warning")
+const canvas=document.getElementById("game")
+const ctx=canvas.getContext("2d")
 
-let gameRunning = true
+const COLS=10
+const ROWS=20
+const SIZE=20
 
-function gameLoop(){
+let block={
+x:4,
+y:0
+}
+
+let gameRunning=true
+
+function draw(){
+
+ctx.clearRect(0,0,200,400)
+
+ctx.fillStyle="cyan"
+ctx.fillRect(block.x*SIZE,block.y*SIZE,SIZE,SIZE)
+
+}
+
+function update(){
 
 if(gameRunning){
 
-// 仮ゲーム処理
-let canvas = document.getElementById("game")
-let ctx = canvas.getContext("2d")
+block.y++
 
-ctx.fillStyle="lime"
-ctx.fillRect(Math.random()*280,Math.random()*380,20,20)
+if(block.y>ROWS){
+block.y=0
+block.x=Math.floor(Math.random()*COLS)
+}
+
+draw()
 
 }
 
-requestAnimationFrame(gameLoop)
 }
 
-gameLoop()
+setInterval(update,400)
 
-// 音チェック
+document.addEventListener("keydown",e=>{
+
+if(!gameRunning) return
+
+if(e.key==="ArrowLeft") block.x--
+if(e.key==="ArrowRight") block.x++
+if(e.key==="ArrowDown") block.y++
+
+})
+
+const audio=document.getElementById("music")
+const warning=document.getElementById("warning")
+
 setInterval(()=>{
 
-if(audio.paused || audio.muted || audio.volume === 0){
+if(audio.paused || audio.muted || audio.volume===0){
 
 warning.style.display="flex"
 gameRunning=false
