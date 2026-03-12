@@ -330,14 +330,37 @@
   }
 
   // ----------------------------------------
-  // Firestore: ユーザーを新規登録（status: wait）
+  // Firestore: 一般公開モードの確認
+  // ----------------------------------------
+  async function isPublicMode() {
+    try {
+      const snap = await getDocs(query(collection(db, "config"), where("key", "==", "publicMode")));
+      if (snap.empty) return false;
+      return snap.docs[0].data().value === true;
+    } catch(e) { return false; }
+  }
+
+  // ----------------------------------------
+  // Firestore: 同じ名前が既に存在するか確認
+  // ----------------------------------------
+  async function nameExists(name) {
+    const q = query(collection(db, "users"), where("name", "==", name));
+    const snap = await getDocs(q);
+    return !snap.empty;
+  }
+
+  // ----------------------------------------
+  // Firestore: ユーザーを新規登録
+  // 一般公開モードならstatus:ok、それ以外はwait
   // ----------------------------------------
   async function registerUser(name) {
+    const publicMode = await isPublicMode();
     await addDoc(collection(db, "users"), {
       name:      name,
-      status:    "wait",
+      status:    publicMode ? "ok" : "wait",
       createdAt: new Date()
     });
+    return publicMode;
   }
 
   // ----------------------------------------
@@ -345,6 +368,9 @@
   // ----------------------------------------
   function openModal() {
     nameInput.value = "";
+    nameInput.style.borderColor = "";
+    const errMsg = document.getElementById("nameErrMsg");
+    if (errMsg) errMsg.textContent = "";
     overlay.classList.add("active");
     setTimeout(() => nameInput.focus(), 100);
   }
@@ -385,10 +411,8 @@
     }
 
     // 登録済み → Firestore で status 確認
-    showToast("確認中...", 60000);
     try {
       const status = await getUserStatus(savedName);
-      toast.classList.remove("show");
 
       if (status === "ok") {
         openPeji();
@@ -403,9 +427,7 @@
         openModal();
       }
     } catch (err) {
-      toast.classList.remove("show");
       console.error("Firestore エラー:", err);
-      showToast("通信エラーが発生しました: " + err.message, 4000);
     }
   });
 
@@ -422,16 +444,37 @@
     }
 
     submitBtn.disabled    = true;
-    submitBtn.textContent = "送信中...";
+    submitBtn.textContent = "確認中...";
 
     try {
-      await registerUser(name);
+      // 同じ名前が既に存在するか確認
+      const exists = await nameExists(name);
+      if (exists) {
+        nameInput.style.borderColor = "#ea4335";
+        submitBtn.disabled    = false;
+        submitBtn.textContent = "申請する";
+        // エラーメッセージ表示
+        let errMsg = document.getElementById("nameErrMsg");
+        if (!errMsg) {
+          errMsg = document.createElement("p");
+          errMsg.id = "nameErrMsg";
+          errMsg.style.cssText = "color:#ea4335;font-size:12px;margin:-10px 0 10px;text-align:left;";
+          nameInput.parentNode.insertBefore(errMsg, nameInput.nextSibling);
+        }
+        errMsg.textContent = "その名前は既に使われています。別の名前にしてください。";
+        nameInput.focus();
+        return;
+      }
+      // 重複なし → 登録
+      const isPublic = await registerUser(name);
       localStorage.setItem("accessUserName", name);
       closeModal();
-      showToast(`「${name}」として申請しました。承認までお待ちください。`, 4000);
+      if (isPublic) {
+        // 一般公開モード → そのままpeji.htmlを開く
+        openPeji();
+      }
     } catch (err) {
       console.error("登録エラー:", err);
-      showToast("エラー: " + err.message, 4000);
     }
 
     submitBtn.disabled    = false;
