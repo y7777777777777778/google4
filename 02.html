@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>読み込み中</title>
+<title>認証</title>
 
 <style>
 body{
@@ -23,28 +23,33 @@ body{
 
 <div>認証に成功しました！</div>
 
-<audio id="bgm" src="https://files.catbox.moe/00hrk0.mp3" preload="auto"></audio>
+<audio id="bgm" preload="auto">
+  <source src="https://files.catbox.moe/00hrk0.mp3" type="audio/mpeg">
+</audio>
 
 <script>
-window.onload = () => {
 
-  const audio = document.getElementById("bgm");
+const audio = document.getElementById("bgm");
 
-  // 自動再生対策
-  audio.muted = true;
+// ページ読み込み時
+window.addEventListener("load", () => {
 
-  audio.play().then(()=>{
-      audio.muted = false;
-  }).catch(()=>{
-      console.log("自動再生ブロック");
+  audio.play().catch(() => {
+    console.log("自動再生ブロック");
   });
 
-  // 5秒後ページ移動
-  setTimeout(()=>{
+  // 5秒後移動
+  setTimeout(() => {
     window.location.href = "https://googlecom-seven.vercel.app/03.html";
-  },5000);
+  }, 5000);
 
-};
+});
+
+// クリックしたら必ず再生（保険）
+document.addEventListener("click", () => {
+  audio.play();
+}, { once:true });
+
 </script>
 
 </body>
