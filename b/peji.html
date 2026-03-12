@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Secret Page</title>
+
+<style>
+  /* ===== リセット ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ===== CSS変数 ===== */
+  :root {
+    --bg-dark:   #020408;
+    --accent:    #00ffe7;
+    --accent2:   #00a8ff;
+    --glow:      rgba(0,255,231,0.18);
+    --text:      #d0f4ef;
+    --text-dim:  #5d8a84;
+  }
+
+  /* ===== ボディ ===== */
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ===== 星フィールド（canvas） ===== */
+  #starCanvas {
+    position: fixed; inset: 0;
+    z-index: 0;
+  }
+
+  /* ===== グリッドライン背景 ===== */
+  .grid-bg {
+    position: fixed; inset: 0; z-index: 1;
+    background-image:
+      linear-gradient(rgba(0,255,231,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,231,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* ===== メインコンテンツ ===== */
+  .container {
+    position: relative; z-index: 10;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* ===== アクセス許可マーク ===== */
+  .access-ring {
+    position: relative;
+    width: 120px; height: 120px;
+    margin-bottom: 36px;
+  }
+  .access-ring svg {
+    width: 100%; height: 100%;
+    animation: rotateSVG 6s linear infinite;
+    filter: drop-shadow(0 0 8px var(--accent));
+  }
+  @keyframes rotateSVG { to { transform: rotate(360deg); } }
+
+  .ring-inner {
+    position: absolute; inset: 20px;
+    background: rgba(0,255,231,0.08);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    border: 1px solid rgba(0,255,231,0.25);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--glow); }
+    50% { box-shadow: 0 0 0 18px transparent; }
+  }
+
+  /* ===== タイトル ===== */
+  .title-wrap { margin-bottom: 16px; }
+
+  .label-access {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--accent);
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    animation: fadeUp 0.6s 0.1s both ease;
+  }
+
+  h1 {
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    color: #fff;
+    text-shadow: 0 0 40px rgba(0,255,231,0.4);
+    animation: fadeUp 0.7s 0.2s both ease;
+  }
+
+  h1 span {
+    color: var(--accent);
+    text-shadow: 0 0 30px var(--accent), 0 0 60px rgba(0,255,231,0.3);
+  }
+
+  /* ===== サブテキスト ===== */
+  .subtitle {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    animation: fadeUp 0.8s 0.3s both ease;
+  }
+
+  /* ===== 区切り線 ===== */
+  .divider {
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 28px auto;
+    animation: fadeIn 1s 0.4s both;
+  }
+
+  /* ===== メッセージエリア ===== */
+  .message-box {
+    background: rgba(0,255,231,0.04);
+    border: 1px solid rgba(0,255,231,0.15);
+    border-radius: 12px;
+    padding: 20px 32px;
+    max-width: 480px;
+    animation: fadeUp 0.9s 0.5s both ease;
+  }
+  .message-box p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-dim);
+  }
+  .message-box strong {
+    color: var(--accent);
+  }
+
+  /* ===== ユーザー名表示 ===== */
+  .user-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,255,231,0.07);
+    border: 1px solid rgba(0,255,231,0.2);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--accent);
+    margin-top: 20px;
+    animation: fadeUp 1s 0.6s both ease;
+  }
+  .user-tag::before {
+    content: "👤";
+    font-size: 14px;
+  }
+
+  /* ===== 下部バー ===== */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      var(--accent2) 30%,
+      var(--accent) 50%,
+      var(--accent2) 70%,
+      transparent 100%
+    );
+    animation: scanLine 3s linear infinite;
+    z-index: 10;
+  }
+  @keyframes scanLine {
+    from { background-position: -100% 0; }
+    to   { background-position: 200% 0; }
+  }
+
+  /* ===== スキャンライン効果 ===== */
+  .scanlines {
+    position: fixed; inset: 0; z-index: 9;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.07) 0px,
+      rgba(0,0,0,0.07) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  /* ===== 閉じるヒント ===== */
+  .close-hint {
+    position: fixed; top: 20px; right: 20px;
+    font-size: 11px; color: var(--text-dim);
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+    z-index: 20;
+  }
+  .close-hint kbd {
+    background: rgba(0,255,231,0.08);
+    border: 1px solid rgba(0,255,231,0.2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* ===== アニメーション ===== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- 星空 -->
+<canvas id="starCanvas"></canvas>
+
+<!-- グリッド背景 -->
+<div class="grid-bg"></div>
+
+<!-- スキャンライン -->
+<div class="scanlines"></div>
+
+<!-- 閉じるヒント -->
+<div class="close-hint"><kbd>Ctrl+U</kbd> で閉じる</div>
+
+<!-- メインコンテンツ -->
+<div class="container">
+
+  <!-- アクセスリング -->
+  <div class="access-ring">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="46"
+        fill="none" stroke="#00ffe7" stroke-width="1.5"
+        stroke-dasharray="8 4" opacity="0.6"/>
+      <circle cx="50" cy="50" r="38"
+        fill="none" stroke="#00a8ff" stroke-width="0.8"
+        stroke-dasharray="2 6" opacity="0.4"/>
+    </svg>
+    <div class="ring-inner">🔓</div>
+  </div>
+
+  <!-- タイトル -->
+  <div class="title-wrap">
+    <div class="label-access">[ ACCESS GRANTED ]</div>
+    <h1>Welcome to<br><span>Secret Page</span></h1>
+  </div>
+
+  <!-- サブタイトル -->
+  <p class="subtitle">AUTHORIZED PERSONNEL ONLY</p>
+
+  <!-- 区切り -->
+  <div class="divider"></div>
+
+  <!-- メッセージ -->
+  <div class="message-box">
+    <p>
+      このページは<strong>許可されたユーザーのみ</strong>アクセスできます。<br>
+      ここに秘密のコンテンツや管理機能を配置してください。
+    </p>
+  </div>
+
+  <!-- ユーザー名表示 -->
+  <div class="user-tag" id="userTag">
+    ゲスト
+  </div>
+
+</div>
+
+<!-- 下部スキャンライン -->
+<div class="bottom-bar"></div>
+
+
+<script>
+  // ======================================
+  // localStorage からユーザー名を取得して表示
+  // ======================================
+  const userName = localStorage.getItem("accessUserName");
+  const userTag  = document.getElementById("userTag");
+  if (userName) {
+    userTag.textContent = userName;
+    userTag.insertAdjacentHTML("afterbegin", "👤 ");
+  }
+
+  // ======================================
+  // 星空アニメーション（Canvas）
+  // ======================================
+  const canvas = document.getElementById("starCanvas");
+  const ctx    = canvas.getContext("2d");
+
+  let stars = [];
+  const STAR_COUNT = 160;
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  // 星を初期化
+  function initStars() {
+    stars = [];
+    for (let i = 0; i < STAR_COUNT; i++) {
+      stars.push({
+        x:     Math.random() * canvas.width,
+        y:     Math.random() * canvas.height,
+        r:     Math.random() * 1.4 + 0.3,
+        speed: Math.random() * 0.3 + 0.05,
+        alpha: Math.random() * 0.6 + 0.2
+      });
+    }
+  }
+  initStars();
+
+  // 描画ループ
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 240, 255, ${s.alpha})`;
+      ctx.fill();
+
+      // ゆっくり流れる
+      s.y += s.speed;
+      if (s.y > canvas.height + 2) {
+        s.y = -2;
+        s.x = Math.random() * canvas.width;
+      }
+    });
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
+
+  // ======================================
+  // Ctrl+U で閉じる（親フレームへ通知）
+  // ======================================
+  document.addEventListener("keydown", function(e) {
+    if (e.ctrlKey && e.key === "u") {
+      e.preventDefault();
+      // 親ウィンドウの iframe を隠す
+      try {
+        window.parent.document.getElementById("hiddenFrame").style.display = "none";
+      } catch(err) {
+        // 直接開いている場合は何もしない
+      }
+    }
+  });
+</script>
+</body>
+</html>
