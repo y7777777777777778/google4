@@ -27,22 +27,6 @@ text-align:center;
 z-index:10;
 }
 
-#warning{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-color:red;
-font-size:40px;
-display:flex;
-justify-content:center;
-align-items:center;
-display:none;
-z-index:999;
-}
-
 #start{
 position:fixed;
 top:0;
@@ -70,10 +54,6 @@ cursor:pointer;
 
 <canvas id="game"></canvas>
 
-<div id="warning">
-音を出してください
-</div>
-
 <div id="start">
 クリックして開始
 </div>
@@ -100,37 +80,52 @@ SIZE=Math.min(canvas.width/COLS,canvas.height/ROWS)
 window.addEventListener("resize",resize)
 resize()
 
-let block={x:4,y:0}
+let block={
+x:4,
+y:0
+}
+
 let gameRunning=false
 
 function draw(){
+
 ctx.clearRect(0,0,canvas.width,canvas.height)
+
 ctx.fillStyle="cyan"
 ctx.fillRect(block.x*SIZE,block.y*SIZE,SIZE,SIZE)
+
 }
 
 function update(){
+
 if(gameRunning){
+
 block.y++
+
 if(block.y>ROWS){
 block.y=0
 block.x=Math.floor(Math.random()*COLS)
 }
+
 draw()
+
 }
+
 }
 
 setInterval(update,400)
 
 document.addEventListener("keydown",e=>{
+
 if(!gameRunning) return
+
 if(e.key==="ArrowLeft") block.x--
 if(e.key==="ArrowRight") block.x++
 if(e.key==="ArrowDown") block.y++
+
 })
 
 const audio=document.getElementById("music")
-const warning=document.getElementById("warning")
 const start=document.getElementById("start")
 
 start.onclick=()=>{
@@ -144,18 +139,6 @@ gameRunning=true
 start.style.display="none"
 
 }
-
-setInterval(()=>{
-
-if(audio.paused || audio.muted || audio.volume===0){
-warning.style.display="flex"
-gameRunning=false
-}else{
-warning.style.display="none"
-gameRunning=true
-}
-
-},1000)
 
 </script>
 
