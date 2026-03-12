@@ -622,17 +622,29 @@
         </td>
       </tr>`;
     try {
-      const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
+      let snapshot;
+      try {
+        const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
+        snapshot = await getDocs(q);
+      } catch (indexErr) {
+        console.warn("orderBy失敗、フォールバック:", indexErr.message);
+        snapshot = await getDocs(collection(db, "users"));
+      }
       allUsers = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       renderTable(allUsers);
     } catch (e) {
       console.error("取得エラー:", e);
       tbody.innerHTML = `
         <tr class="empty-row">
-          <td colspan="3">⚠ データの取得に失敗しました。<br>Firebase設定を確認してください。</td>
+          <td colspan="3">
+            ⚠ データ取得に失敗しました<br>
+            <small style="color:#5d8a84;font-size:11px;display:block;margin-top:8px;">
+              エラー: ${e.message}<br>
+              Firestoreのセキュリティルールで read を許可しているか確認してください
+            </small>
+          </td>
         </tr>`;
-      showToast("データ取得に失敗しました", 4000);
+      showToast("エラー: " + e.message, 6000);
     }
   }
 
