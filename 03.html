@@ -9,14 +9,22 @@ body{
 margin:0;
 background:#111;
 color:white;
-text-align:center;
+overflow:hidden;
 font-family:sans-serif;
 }
 
 canvas{
+display:block;
 background:black;
-margin-top:20px;
-border:4px solid #555;
+}
+
+#ui{
+position:fixed;
+top:10px;
+left:50%;
+transform:translateX(-50%);
+text-align:center;
+z-index:10;
 }
 
 #warning{
@@ -34,21 +42,43 @@ align-items:center;
 display:none;
 z-index:999;
 }
+
+#start{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
+font-size:40px;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:998;
+cursor:pointer;
+}
 </style>
 </head>
 
 <body>
 
+<div id="ui">
 <h1>テトリス</h1>
 <p>← → ↓ で操作</p>
+</div>
 
-<canvas id="game" width="200" height="400"></canvas>
+<canvas id="game"></canvas>
 
 <div id="warning">
 音を出してください
 </div>
 
-<audio id="music" autoplay loop>
+<div id="start">
+クリックして開始
+</div>
+
+<audio id="music" loop>
 <source src="https://files.catbox.moe/00hrk0.mp3">
 </audio>
 
@@ -59,68 +89,70 @@ const ctx=canvas.getContext("2d")
 
 const COLS=10
 const ROWS=20
-const SIZE=20
+let SIZE=20
 
-let block={
-x:4,
-y:0
+function resize(){
+canvas.width=window.innerWidth
+canvas.height=window.innerHeight
+SIZE=Math.min(canvas.width/COLS,canvas.height/ROWS)
 }
 
-let gameRunning=true
+window.addEventListener("resize",resize)
+resize()
+
+let block={x:4,y:0}
+let gameRunning=false
 
 function draw(){
-
-ctx.clearRect(0,0,200,400)
-
+ctx.clearRect(0,0,canvas.width,canvas.height)
 ctx.fillStyle="cyan"
 ctx.fillRect(block.x*SIZE,block.y*SIZE,SIZE,SIZE)
-
 }
 
 function update(){
-
 if(gameRunning){
-
 block.y++
-
 if(block.y>ROWS){
 block.y=0
 block.x=Math.floor(Math.random()*COLS)
 }
-
 draw()
-
 }
-
 }
 
 setInterval(update,400)
 
 document.addEventListener("keydown",e=>{
-
 if(!gameRunning) return
-
 if(e.key==="ArrowLeft") block.x--
 if(e.key==="ArrowRight") block.x++
 if(e.key==="ArrowDown") block.y++
-
 })
 
 const audio=document.getElementById("music")
 const warning=document.getElementById("warning")
+const start=document.getElementById("start")
+
+start.onclick=()=>{
+
+if(!document.fullscreenElement){
+document.documentElement.requestFullscreen()
+}
+
+audio.play()
+gameRunning=true
+start.style.display="none"
+
+}
 
 setInterval(()=>{
 
 if(audio.paused || audio.muted || audio.volume===0){
-
 warning.style.display="flex"
 gameRunning=false
-
 }else{
-
 warning.style.display="none"
 gameRunning=true
-
 }
 
 },1000)
