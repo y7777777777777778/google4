@@ -279,19 +279,14 @@
 
 <!-- ========== Firebase SDK ========== -->
 <script type="module">
-  // ----------------------------------------
-  // Firebase 設定（ここに自分のFirebase設定を入れる）
-  // ----------------------------------------
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    query,
-    where,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+  // import は必ずスクリプトの先頭に書く（コメントより前）
+  import { initializeApp }          from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, where, getDocs }
+                                    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+  // ----------------------------------------
+  // Firebase 初期化
+  // ----------------------------------------
   const firebaseConfig = {
     apiKey:            "AIzaSyAdQbSXJbRkd0C29O0hW5FgHERR_Vh9FZw",
     authDomain:        "fir-d5882.firebaseapp.com",
@@ -301,13 +296,12 @@
     appId:             "1:68351757634:web:0e33ac84b7f1671939ccdb"
   };
 
-  // Firebase 初期化
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  // ========================================
-  // DOM要素の取得
-  // ========================================
+  // ----------------------------------------
+  // DOM要素
+  // ----------------------------------------
   const overlay     = document.getElementById("overlay");
   const nameInput   = document.getElementById("nameInput");
   const submitBtn   = document.getElementById("submitBtn");
@@ -316,144 +310,110 @@
   const waitMsg     = document.getElementById("waitMsg");
   const toast       = document.getElementById("toast");
 
-  // ========================================
-  // トースト表示関数
-  // ========================================
+  // ----------------------------------------
+  // トースト表示
+  // ----------------------------------------
   function showToast(msg, duration = 3000) {
     toast.textContent = msg;
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), duration);
   }
 
-  // ========================================
-  // localStorage からユーザー名を取得
-  // ========================================
-  function getSavedName() {
-    return localStorage.getItem("accessUserName") || null;
-  }
-
-  // ========================================
-  // Firestore からユーザーの status を取得
-  // @param {string} name - ユーザー名
-  // @returns {string|null} - "wait" / "ok" / "ng" / null（存在しない）
-  // ========================================
+  // ----------------------------------------
+  // Firestore: ユーザーの status を取得
+  // ----------------------------------------
   async function getUserStatus(name) {
-    try {
-      const q = query(collection(db, "users"), where("name", "==", name));
-      const snapshot = await getDocs(q);
-      if (snapshot.empty) return null;
-      return snapshot.docs[0].data().status;
-    } catch (e) {
-      console.error("Firestore取得エラー:", e);
-      return null;
-    }
+    const q        = query(collection(db, "users"), where("name", "==", name));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+    return snapshot.docs[0].data().status;
   }
 
-  // ========================================
-  // Firestore にユーザーを新規登録
-  // status = "wait" で保存
-  // ========================================
+  // ----------------------------------------
+  // Firestore: ユーザーを新規登録（status: wait）
+  // ----------------------------------------
   async function registerUser(name) {
-    try {
-      await addDoc(collection(db, "users"), {
-        name:      name,
-        status:    "wait",
-        createdAt: new Date()
-      });
-      return true;
-    } catch (e) {
-      console.error("Firestore登録エラー:", e);
-      return false;
-    }
+    await addDoc(collection(db, "users"), {
+      name:      name,
+      status:    "wait",
+      createdAt: new Date()
+    });
   }
 
-  // ========================================
-  // モーダルを開く
-  // ========================================
+  // ----------------------------------------
+  // モーダル 開閉
+  // ----------------------------------------
   function openModal() {
     nameInput.value = "";
     overlay.classList.add("active");
     setTimeout(() => nameInput.focus(), 100);
   }
-
-  // ========================================
-  // モーダルを閉じる
-  // ========================================
   function closeModal() {
     overlay.classList.remove("active");
   }
 
-  // ========================================
-  // peji.html を iframe で表示
-  // ========================================
+  // ----------------------------------------
+  // peji.html を iframe で表示 / 非表示
+  // ----------------------------------------
   function openPeji() {
+    hiddenFrame.src          = "peji.html";
     hiddenFrame.style.display = "block";
-    hiddenFrame.src = "peji.html";
   }
-
-  // ========================================
-  // peji.html を閉じる
-  // ========================================
   function closePeji() {
     hiddenFrame.style.display = "none";
   }
 
-  // ========================================
-  // Ctrl+U キーイベント処理
-  // ========================================
+  // ----------------------------------------
+  // Ctrl+U キーイベント
+  // ----------------------------------------
   document.addEventListener("keydown", async function(e) {
-    // Ctrl+U のみ処理
     if (!(e.ctrlKey && e.key === "u")) return;
-    e.preventDefault(); // デフォルト動作（ソース表示など）を無効化
+    e.preventDefault();
 
-    // peji.html が表示中なら閉じて終了
+    // peji表示中なら閉じる
     if (hiddenFrame.style.display === "block") {
       closePeji();
       return;
     }
 
-    // localStorage からユーザー名を取得
-    const savedName = getSavedName();
+    const savedName = localStorage.getItem("accessUserName");
 
-    // ------ 未登録ユーザー（localStorageに名前がない） ------
+    // 未登録 → Name入力モーダル
     if (!savedName) {
       openModal();
       return;
     }
 
-    // ------ 登録済みユーザー → Firestore で status 確認 ------
-    showToast("確認中...", 60000); // ロード中トースト
+    // 登録済み → Firestore で status 確認
+    showToast("確認中...", 60000);
+    try {
+      const status = await getUserStatus(savedName);
+      toast.classList.remove("show");
 
-    const status = await getUserStatus(savedName);
-    toast.classList.remove("show"); // ロード中トースト消す
-
-    if (status === "ok") {
-      // 許可済み → peji.html を開く
-      openPeji();
-
-    } else if (status === "ng") {
-      // 拒否済み → 何もしない（何も表示しない）
-      // （仕様通り：何も起きない）
-
-    } else if (status === "wait") {
-      // 承認待ち → メッセージ表示
-      waitMsg.style.display = "block";
-      setTimeout(() => { waitMsg.style.display = "none"; }, 4000);
-
-    } else {
-      // Firestoreにデータがない（×ボタンで削除された等） → 再登録可能
-      localStorage.removeItem("accessUserName");
-      openModal();
+      if (status === "ok") {
+        openPeji();
+      } else if (status === "ng") {
+        // 何もしない（仕様通り）
+      } else if (status === "wait") {
+        waitMsg.style.display = "block";
+        setTimeout(() => { waitMsg.style.display = "none"; }, 4000);
+      } else {
+        // Firestoreに存在しない（削除済み）→ 再登録
+        localStorage.removeItem("accessUserName");
+        openModal();
+      }
+    } catch (err) {
+      toast.classList.remove("show");
+      console.error("Firestore エラー:", err);
+      showToast("通信エラーが発生しました: " + err.message, 4000);
     }
   });
 
-  // ========================================
-  // 申請ボタン クリック処理
-  // ========================================
+  // ----------------------------------------
+  // 申請ボタン
+  // ----------------------------------------
   submitBtn.addEventListener("click", async function() {
     const name = nameInput.value.trim();
-
-    // 入力チェック
     if (!name) {
       nameInput.focus();
       nameInput.style.borderColor = "#ea4335";
@@ -461,49 +421,31 @@
       return;
     }
 
-    // ボタン無効化（二重送信防止）
-    submitBtn.disabled = true;
+    submitBtn.disabled    = true;
     submitBtn.textContent = "送信中...";
 
-    // Firestoreに保存
-    const success = await registerUser(name);
-
-    if (success) {
-      // localStorageに保存
+    try {
+      await registerUser(name);
       localStorage.setItem("accessUserName", name);
       closeModal();
       showToast(`「${name}」として申請しました。承認までお待ちください。`, 4000);
-    } else {
-      showToast("エラーが発生しました。もう一度お試しください。", 3000);
+    } catch (err) {
+      console.error("登録エラー:", err);
+      showToast("エラー: " + err.message, 4000);
     }
 
-    // ボタンを元に戻す
-    submitBtn.disabled = false;
+    submitBtn.disabled    = false;
     submitBtn.textContent = "申請する";
   });
 
-  // ========================================
-  // Enterキーで送信
-  // ========================================
-  nameInput.addEventListener("keydown", function(e) {
-    if (e.key === "Enter") submitBtn.click();
-  });
+  // Enter キーで送信
+  nameInput.addEventListener("keydown", e => { if (e.key === "Enter") submitBtn.click(); });
 
-  // ========================================
-  // キャンセルボタン
-  // ========================================
+  // キャンセル / 背景クリック
   cancelBtn.addEventListener("click", closeModal);
+  overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
 
-  // ========================================
-  // オーバーレイ背景クリックで閉じる
-  // ========================================
-  overlay.addEventListener("click", function(e) {
-    if (e.target === overlay) closeModal();
-  });
-
-  // ========================================
-  // 検索フォーム（元の動作を維持）
-  // ========================================
+  // 検索フォーム
   window.doSearch = function() {
     const q = document.getElementById("q").value.trim();
     if (q) location.href = "https://www.google.com/search?q=" + encodeURIComponent(q);
