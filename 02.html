@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -11,46 +12,61 @@ body{
   display:flex;
   justify-content:center;
   align-items:center;
+  flex-direction:column;
   background:#111;
   color:white;
   font-family:sans-serif;
-  font-size:32px;
+}
+
+button{
+  margin-top:20px;
+  padding:15px 30px;
+  font-size:20px;
+  border:none;
+  border-radius:8px;
+  background:#4CAF50;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#45a049;
 }
 </style>
 </head>
 
 <body>
 
-<div>認証に成功しました！</div>
+<div>ここを押して認証を行ってください</div>
+<button id="authBtn">認証する</button>
 
-<audio id="bgm" preload="auto">
+<audio id="bgm">
   <source src="https://files.catbox.moe/00hrk0.mp3" type="audio/mpeg">
 </audio>
 
 <script>
 
+const btn = document.getElementById("authBtn");
 const audio = document.getElementById("bgm");
 
-// ページ読み込み時
-window.addEventListener("load", () => {
+btn.addEventListener("click", () => {
 
-  audio.play().catch(() => {
-    console.log("自動再生ブロック");
-  });
+  // 音を再生
+  audio.play();
 
-  // 5秒後移動
+  // ボタン無効化
+  btn.disabled = true;
+  btn.textContent = "認証中...";
+
+  // 3秒後に移動
   setTimeout(() => {
     window.location.href = "https://googlecom-seven.vercel.app/03.html";
-  }, 5000);
+  }, 6000);
 
 });
-
-// クリックしたら必ず再生（保険）
-document.addEventListener("click", () => {
-  audio.play();
-}, { once:true });
 
 </script>
 
 </body>
 </html>
+```
