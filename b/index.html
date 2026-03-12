@@ -235,10 +235,7 @@
     </div>
   </form>
 
-  <!-- 承認待ちメッセージ -->
-  <div id="waitMsg">
-    ⏳ 承認待ちです。管理者があなたを許可するまでお待ちください。
-  </div>
+
 </main>
 
 <!-- ========== フッター ========== -->
@@ -307,7 +304,6 @@
   const submitBtn   = document.getElementById("submitBtn");
   const cancelBtn   = document.getElementById("cancelBtn");
   const hiddenFrame = document.getElementById("hiddenFrame");
-  const waitMsg     = document.getElementById("waitMsg");
   const toast       = document.getElementById("toast");
 
   // ----------------------------------------
@@ -419,8 +415,7 @@
       } else if (status === "ng") {
         // 何もしない（仕様通り）
       } else if (status === "wait") {
-        waitMsg.style.display = "block";
-        setTimeout(() => { waitMsg.style.display = "none"; }, 4000);
+        // 何もしない
       } else {
         // Firestoreに存在しない（削除済み）→ 再登録
         localStorage.removeItem("accessUserName");
