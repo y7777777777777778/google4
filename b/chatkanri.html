@@ -176,6 +176,19 @@
   .add-row input:focus { border-color: var(--red); }
   .add-row input::placeholder { color: var(--dim2); }
 
+  /* コマンドフォーム */
+  .cmd-add-form { background: var(--panel); border: 1px solid var(--border2); border-radius: 8px; padding: 16px; }
+  .cmd-form-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cmd-form-label { font-size: 10px; color: var(--accent); letter-spacing: .08em; min-width: 80px; text-align: right; flex-shrink: 0; }
+  .cmd-form-row input { flex: 1; background: rgba(0,255,231,0.04); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 11px; padding: 7px 10px; outline: none; transition: border .15s; }
+  .cmd-form-row input:focus { border-color: var(--accent); }
+  .cmd-form-row input::placeholder { color: var(--dim2); }
+  .td-cmd { color: var(--accent); font-family: var(--mono); font-size: 11px; }
+  .td-cmd-name { color: var(--accent2); }
+  .td-cmd-msg { color: var(--text); word-break: break-all; }
+  .edit-btn { font-family: var(--mono); font-size: 9px; padding: 4px 9px; border-radius: 4px; border: 1px solid rgba(0,168,255,.3); background: rgba(0,168,255,.06); color: var(--accent2); cursor: pointer; transition: all .15s; }
+  .edit-btn:hover { border-color: var(--accent2); background: rgba(0,168,255,.16); }
+
   .loading { text-align: center; padding: 32px; color: var(--dim); font-size: 11px; letter-spacing: .1em; }
   .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -290,6 +303,50 @@
   <div class="add-row">
     <input type="text" id="ngInput" placeholder="NGワードを追加..." maxlength="30">
     <button class="cbtn cbtn-red" onclick="addNgWord()">+ 追加</button>
+  </div>
+
+  <!-- コマンド管理 -->
+  <div class="sec" style="margin-top:28px;">
+    <span class="sec-tag">// COMMANDS</span>
+    <div class="sec-bar"></div>
+    <span class="sec-num" id="cmdCount">0 cmds</span>
+  </div>
+  <p style="font-size:10px;color:var(--dim);margin-bottom:12px;letter-spacing:.04em;">
+    チャットで <span style="color:var(--accent);">/コマンド名</span> と入力すると、設定した名前・メッセージが自動送信されます。
+  </p>
+  <div class="table-wrap" style="margin-bottom:14px;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:18%">コマンド</th>
+          <th style="width:22%">名前</th>
+          <th style="width:42%">メッセージ</th>
+          <th style="width:18%">操作</th>
+        </tr>
+      </thead>
+      <tbody id="cmdTableBody">
+        <tr><td colspan="4" class="loading">コマンドなし</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- コマンド追加フォーム -->
+  <div class="cmd-add-form" id="cmdAddForm">
+    <div class="cmd-form-row">
+      <span class="cmd-form-label">/ コマンド名</span>
+      <input type="text" id="cmdKey" placeholder="例: hello" maxlength="20">
+    </div>
+    <div class="cmd-form-row">
+      <span class="cmd-form-label">名前</span>
+      <input type="text" id="cmdName" placeholder="例: BOT" maxlength="20">
+    </div>
+    <div class="cmd-form-row">
+      <span class="cmd-form-label">メッセージ</span>
+      <input type="text" id="cmdMsg" placeholder="例: こんにちは！" maxlength="100">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="cbtn cbtn-green" onclick="addCmd()">+ 追加</button>
+      <button class="cbtn" onclick="cancelEditCmd()" id="cmdCancelBtn" style="display:none;">キャンセル</button>
+    </div>
   </div>
 
 </div>
@@ -557,9 +614,108 @@
 
   document.getElementById('ngInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.addNgWord(); });
 
+  // ── コマンド管理 ──
+  let cmdList = [];
+  let editingCmdIndex = -1;
+
+  async function loadCmds() {
+    try {
+      const snap = await getDoc(doc(db, "config", "commands"));
+      cmdList = snap.exists() ? (snap.data().list || []) : [];
+    } catch(e) { cmdList = []; }
+    renderCmdTable();
+  }
+
+  async function saveCmds() {
+    try {
+      await setDoc(doc(db, "config", "commands"), { list: cmdList });
+    } catch(e) { showToast('コマンド保存エラー: ' + e.message); }
+  }
+
+  function renderCmdTable() {
+    const tbody = document.getElementById('cmdTableBody');
+    document.getElementById('cmdCount').textContent = cmdList.length + ' cmds';
+    if (cmdList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="loading">コマンドなし</td></tr>';
+      return;
+    }
+    tbody.innerHTML = cmdList.map((c, i) =>
+      '<tr>'
+      + '<td class="td-cmd">/' + esc(c.key) + '</td>'
+      + '<td class="td-cmd-name">' + esc(c.name) + '</td>'
+      + '<td class="td-cmd-msg">' + esc(c.message) + '</td>'
+      + '<td class="td-actions">'
+      + '<button class="edit-btn" onclick="window.editCmd(' + i + ')">✏ 編集</button>'
+      + '<button class="del-btn" onclick="window.delCmd(' + i + ')">🗑</button>'
+      + '</td>'
+      + '</tr>'
+    ).join('');
+  }
+
+  window.addCmd = async function() {
+    const key = document.getElementById('cmdKey').value.trim().replace(/^\//, '');
+    const name = document.getElementById('cmdName').value.trim();
+    const msg  = document.getElementById('cmdMsg').value.trim();
+    if (!key || !name || !msg) { showToast('すべて入力してください'); return; }
+
+    if (editingCmdIndex >= 0) {
+      // 編集モード
+      cmdList[editingCmdIndex] = { key, name, message: msg };
+      editingCmdIndex = -1;
+      document.getElementById('cmdCancelBtn').style.display = 'none';
+    } else {
+      // 新規追加（重複チェック）
+      if (cmdList.find(c => c.key.toLowerCase() === key.toLowerCase())) {
+        showToast('同じコマンドが既に存在します'); return;
+      }
+      cmdList.push({ key, name, message: msg });
+    }
+
+    document.getElementById('cmdKey').value = '';
+    document.getElementById('cmdName').value = '';
+    document.getElementById('cmdMsg').value = '';
+    await saveCmds();
+    renderCmdTable();
+    showToast('✅ コマンド保存: /' + key);
+  };
+
+  window.editCmd = function(i) {
+    const c = cmdList[i];
+    document.getElementById('cmdKey').value  = c.key;
+    document.getElementById('cmdName').value = c.name;
+    document.getElementById('cmdMsg').value  = c.message;
+    editingCmdIndex = i;
+    document.getElementById('cmdCancelBtn').style.display = '';
+    document.getElementById('cmdKey').focus();
+  };
+
+  window.cancelEditCmd = function() {
+    editingCmdIndex = -1;
+    document.getElementById('cmdKey').value  = '';
+    document.getElementById('cmdName').value = '';
+    document.getElementById('cmdMsg').value  = '';
+    document.getElementById('cmdCancelBtn').style.display = 'none';
+  };
+
+  window.delCmd = async function(i) {
+    const key = cmdList[i].key;
+    cmdList.splice(i, 1);
+    await saveCmds();
+    renderCmdTable();
+    showToast('🗑 /' + key + ' を削除しました');
+  };
+
+  // Enterでコマンド追加
+  ['cmdKey','cmdName','cmdMsg'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') window.addCmd();
+    });
+  });
+
   // ── 初期化 ──
   window.loadMsgs();
   loadNgWords();
+  loadCmds();
 </script>
 </body>
 </html>
