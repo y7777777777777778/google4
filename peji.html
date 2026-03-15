@@ -246,15 +246,9 @@
       font-family: var(--mono); font-size: 11px;
       color: var(--accent); white-space: nowrap;
       position: absolute;
-      transform: translateX(100vw);
-      animation: none;
-    }
-    .ticker-text.running {
-      animation: tickerScroll var(--dur, 20s) linear forwards;
-    }
-    @keyframes tickerScroll {
-      0%   { transform: translateX(100vw); }
-      100% { transform: translateX(-200%); }
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      will-change: transform;
     }
     /* チャットボタン */
     #chatOpenBtn {
@@ -285,7 +279,7 @@
       position: fixed;
       bottom: 20px; right: 20px;
       width: 320px; height: 400px;
-      background: #0a0e1a;
+      background: #0a0e1a !important;
       border: 1px solid var(--border2);
       border-radius: 10px;
       z-index: 100;
@@ -324,7 +318,9 @@
     #chatMsgs {
       flex: 1; overflow-y: auto;
       padding: 10px 12px; display: flex; flex-direction: column; gap: 5px;
+      background: #0a0e1a;
     }
+    body.light #chatMsgs { background: #f5f5f5; }
     #chatMsgs::-webkit-scrollbar { width: 3px; }
     #chatMsgs::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
     .chat-msg {
@@ -336,7 +332,9 @@
       color: var(--accent2); flex-shrink: 0; letter-spacing: .03em;
     }
     .chat-msg-name.me { color: var(--accent); }
-    .chat-msg-text { color: var(--text); word-break: break-all; flex: 1; }
+    .chat-msg-name.bot { color: #3dd68c; }
+    .chat-msg-text { color: #d4f0ec; word-break: break-all; flex: 1; }
+    body.light .chat-msg-text { color: #1a1a2e; }
     .chat-msg-time {
       font-family: var(--mono); font-size: 9px;
       color: var(--dim2); flex-shrink: 0;
@@ -683,7 +681,7 @@
     <div class="ticker-wrap" onclick="openChatPopup()">
       <div class="ticker-dot"></div>
       <div class="ticker-inner">
-        <span class="ticker-text running" id="tickerText" style="--dur:25s; color:var(--dim);">LIVE CHAT — メッセージがここに流れます</span>
+        <!-- テロップはJSで動的に追加 -->
       </div>
     </div>
     <button id="chatOpenBtn" onclick="openChatPopup()">
@@ -961,11 +959,84 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  // ── NGワード取得（リアルタイム監視） ──
+  let ngWordsList = [];
+  onSnapshot(doc(db, "config", "ngWords"), snap => {
+    ngWordsList = snap.exists() ? (snap.data().words || []) : [];
+  });
+
+  // ── コマンド取得（リアルタイム監視） ──
+  let commandsList = [];
+  onSnapshot(doc(db, "config", "commands"), snap => {
+    if (snap.exists()) {
+      const data = snap.data();
+      // list または commands フィールド両方に対応
+      commandsList = data.list || data.commands || [];
+    } else {
+      commandsList = [];
+    }
+  });
+
   // ── 送信 ──
   async function sendMsg() {
     const input = document.getElementById('chatInput');
     const text  = input.value.trim();
     if (!text) return;
+
+    // コマンド判定（/から始まる）
+    if (text.startsWith('/')) {
+      const cmdKey = text.slice(1).toLowerCase().trim();
+      // コマンドリストをその場でFirestoreから再取得して確実に最新を使う
+      let latestCmds = commandsList;
+      try {
+        const snap = await getDoc(doc(db, 'config', 'commands'));
+        if (snap.exists()) {
+          const d = snap.data();
+          latestCmds = d.list || d.commands || [];
+        }
+      } catch(e) {}
+
+      const cmd = latestCmds.find(c => c.key && c.key.toLowerCase() === cmdKey);
+      if (cmd) {
+        input.value = '';
+        try {
+          await addDoc(collection(db, "chat"), {
+            name: cmd.name || 'BOT',
+            text: cmd.message || cmd.text || '',
+            ts:   serverTimestamp()
+          });
+        } catch(e) { console.error('addDoc error:', e); }
+        return;
+      } else {
+        // コマンドが見つからない
+        input.value = '';
+        input.style.borderColor = '#ffb300';
+        input.style.color = '#ffb300';
+        input.placeholder = '⚠ /' + cmdKey + ' は未登録 (登録数:' + latestCmds.length + ')';
+        setTimeout(() => {
+          input.style.borderColor = '';
+          input.style.color = '';
+          input.placeholder = 'メッセージ...';
+        }, 3000);
+        return;
+      }
+    }
+
+    // NGワードチェック
+    const hitNg = ngWordsList.find(w => text.toLowerCase().includes(w.toLowerCase()));
+    if (hitNg) {
+      input.value = '';
+      input.style.borderColor = '#ff4466';
+      input.style.color = '#ff4466';
+      input.placeholder = '⚠ NGワードが含まれています';
+      setTimeout(() => {
+        input.style.borderColor = '';
+        input.style.color = '';
+        input.placeholder = 'メッセージ...';
+      }, 2500);
+      return;
+    }
+
     input.value = '';
     try {
       await addDoc(collection(db, "chat"), {
@@ -986,27 +1057,59 @@
   let   tickerQueue  = [];
   let   tickerRunning = false;
 
-  // テロップ速度（chatkanriから取得、デフォルト15秒）
-  let tickerSpeed = 15;
+  // ── テロップ: requestAnimationFrameで複数同時流し ──
+  let tickerSpeed = 15; // 秒（chatkanriで変更可能）
+  const tickerItems = []; // { el, x }
+  let tickerRAF = null;
+  let tickerWrapW = 0;
 
-  // 複数同時流し：各メッセージを独立したspanで流す
-  function launchTicker(text) {
+  function getTickerWrapWidth() {
+    return tickerInner.parentElement ? tickerInner.parentElement.offsetWidth : 400;
+  }
+
+  function tickerLoop() {
+    tickerWrapW = getTickerWrapWidth();
+    // pxPerFrame: 画面幅を tickerSpeed 秒で横断する速さ
+    const pxPerFrame = (tickerWrapW + 600) / (tickerSpeed * 60);
+    let alive = false;
+    for (let i = tickerItems.length - 1; i >= 0; i--) {
+      const item = tickerItems[i];
+      item.x -= pxPerFrame;
+      item.el.style.transform = 'translateX(' + item.x + 'px) translateY(-50%)';
+      // 画面左端を完全に超えたら削除
+      if (item.x + item.el.offsetWidth < -10) {
+        item.el.remove();
+        tickerItems.splice(i, 1);
+      } else {
+        alive = true;
+      }
+    }
+    if (tickerItems.length > 0 || alive) {
+      tickerRAF = requestAnimationFrame(tickerLoop);
+    } else {
+      tickerRAF = null;
+    }
+  }
+
+  function launchTicker(text, delayX = 0) {
     const span = document.createElement('span');
     span.className = 'ticker-text';
     span.textContent = text;
     tickerInner.appendChild(span);
-    span.style.setProperty('--dur', tickerSpeed + 's');
-    span.offsetHeight;
-    span.classList.add('running');
-    span.addEventListener('animationend', () => span.remove());
+    // 右端の外側から開始（複数ある場合はさらに右へずらす）
+    tickerWrapW = getTickerWrapWidth();
+    const startX = tickerWrapW + delayX;
+    span.style.transform = 'translateX(' + startX + 'px) translateY(-50%)';
+    tickerItems.push({ el: span, x: startX });
+    if (!tickerRAF) tickerRAF = requestAnimationFrame(tickerLoop);
   }
 
   function runTicker() {
     if (tickerQueue.length === 0) { tickerRunning = false; return; }
     tickerRunning = true;
-    // キュー内の全メッセージを少しずつずらして同時に流す
+    // 各メッセージを間隔をあけて並べる（重ならないよう200px間隔）
     tickerQueue.forEach((text, i) => {
-      setTimeout(() => launchTicker(text), i * 800);
+      launchTicker(text, i * 240);
     });
     tickerQueue = [];
     tickerRunning = false;
@@ -1024,6 +1127,7 @@
     if (data.closed) {
       inputEl.disabled = true; sendEl.disabled = true; nameEl2.disabled = true;
       inputEl.placeholder = '【チャット閉鎖中】';
+      inputEl.style.color = '#ffb300';
     } else {
       inputEl.disabled = false; sendEl.disabled = false; nameEl2.disabled = false;
       inputEl.placeholder = 'メッセージ...';
@@ -1034,6 +1138,7 @@
     if (banned.includes(myN)) {
       inputEl.disabled = true; sendEl.disabled = true;
       inputEl.placeholder = '【BANされています】';
+      inputEl.style.color = '#ff4466';
     }
   });
 
@@ -1051,8 +1156,8 @@
         : '';
       const cls = isMe ? ' me' : '';
       return '<div class="chat-msg">'
-        + '<span class="chat-msg-name' + cls + '">' + escHtml(m.name) + '</span>'
-        + '<span class="chat-msg-text">' + escHtml(m.text) + '</span>'
+        + '<span class="chat-msg-name' + cls + '" style="color:' + (isMe ? 'var(--accent)' : '#00a8ff') + '">' + escHtml(m.name) + '</span>'
+        + '<span class="chat-msg-text" style="color:#d4f0ec">' + escHtml(m.text) + '</span>'
         + '<span class="chat-msg-time">' + time + '</span>'
         + '</div>';
     }).join('');
