@@ -244,13 +244,16 @@
     }
     .ticker-text {
       font-family: var(--mono); font-size: 11px;
-      color: var(--dim); white-space: nowrap;
-      animation: tickerScroll 18s linear infinite;
+      color: var(--accent); white-space: nowrap;
+      position: absolute; right: -100%;
+      animation: none;
     }
-    .ticker-text.new-msg { color: var(--accent); }
+    .ticker-text.running {
+      animation: tickerScroll var(--dur, 20s) linear forwards;
+    }
     @keyframes tickerScroll {
-      0%   { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
+      0%   { right: -100%; }
+      100% { right: 110%; }
     }
     /* チャットボタン */
     #chatOpenBtn {
@@ -679,7 +682,7 @@
     <div class="ticker-wrap" onclick="openChatPopup()">
       <div class="ticker-dot"></div>
       <div class="ticker-inner">
-        <span class="ticker-text" id="tickerText">LIVE CHAT — メッセージがここに流れます</span>
+        <span class="ticker-text running" id="tickerText" style="--dur:25s; color:var(--dim);">LIVE CHAT — メッセージがここに流れます</span>
       </div>
     </div>
     <button id="chatOpenBtn" onclick="openChatPopup()">
@@ -977,8 +980,30 @@
   // ── リアルタイム受信 ──
   let lastCount = 0;
   let unread    = 0;
-  const msgsEl  = document.getElementById('chatMsgs');
-  const ticker  = document.getElementById('tickerText');
+  const msgsEl       = document.getElementById('chatMsgs');
+  const tickerInner  = document.querySelector('.ticker-inner');
+  let   tickerQueue  = [];
+  let   tickerRunning = false;
+
+  function runTicker() {
+    if (tickerQueue.length === 0) { tickerRunning = false; return; }
+    tickerRunning = true;
+    const text = tickerQueue.shift();
+    // 新しいspanを作って右端から流す
+    const span = document.createElement('span');
+    span.className = 'ticker-text';
+    span.textContent = text;
+    tickerInner.appendChild(span);
+    // テキスト長に応じてspeed調整（長いほどゆっくり）
+    const dur = Math.max(12, Math.min(28, text.length * 0.35));
+    span.style.setProperty('--dur', dur + 's');
+    span.offsetHeight;
+    span.classList.add('running');
+    span.addEventListener('animationend', () => {
+      span.remove();
+      runTicker(); // 次のメッセージへ
+    });
+  }
 
   const q = query(collection(db, "chat"), orderBy("ts", "desc"), limit(50));
   onSnapshot(q, snap => {
@@ -1001,15 +1026,13 @@
     }).join('');
     msgsEl.scrollTop = msgsEl.scrollHeight;
 
-    // ── テロップ更新（最新メッセージを流す） ──
-    if (msgs.length > 0) {
-      const latest = msgs[msgs.length - 1];
-      ticker.textContent = latest.name + ': ' + latest.text;
-      ticker.classList.add('new-msg');
-      // アニメーションリセット
-      ticker.style.animation = 'none';
-      ticker.offsetHeight; // reflow
-      ticker.style.animation = '';
+    // ── テロップキュー：新着を末尾に追加して順番に流す ──
+    if (msgs.length > lastCount && lastCount !== 0) {
+      const newMsgs = msgs.slice(lastCount);
+      newMsgs.forEach(m => {
+        tickerQueue.push(m.name + ': ' + m.text);
+      });
+      if (!tickerRunning) runTicker();
     }
 
     // ── 未読バッジ（ポップアップが閉じているとき） ──
