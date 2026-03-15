@@ -426,6 +426,84 @@
     background: var(--ok);
   }
 
+  /* ===== アク禁パネル ===== */
+  .ban-panel {
+    margin: 0 32px 0;
+    background: rgba(255,68,102,0.05);
+    border: 1px solid rgba(255,68,102,0.25);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .ban-panel.all-banned {
+    background: rgba(255,68,102,0.12);
+    border-color: rgba(255,68,102,0.5);
+  }
+  .ban-panel-left { display: flex; align-items: center; gap: 12px; }
+  .ban-panel-icon { font-size: 22px; }
+  .ban-panel-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .ban-panel-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ban-panel-actions { display: flex; gap: 8px; align-items: center; }
+  .ban-all-btn {
+    padding: 8px 18px; border-radius: 6px;
+    border: 1px solid rgba(255,68,102,0.4);
+    background: rgba(255,68,102,0.08);
+    color: #ff4466; font-size: 13px; cursor: pointer;
+    font-family: inherit; font-weight: 600;
+    transition: all .15s;
+  }
+  .ban-all-btn:hover { background: rgba(255,68,102,0.2); border-color: #ff4466; }
+  .ban-all-btn.active {
+    background: rgba(255,68,102,0.25);
+    border-color: #ff4466; color: #fff;
+  }
+
+  .ban-list-wrap {
+    margin: 8px 32px 0;
+    background: var(--surface);
+    border: 1px solid rgba(255,68,102,0.2);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 12px 16px;
+  }
+  .ban-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; min-height: 24px; }
+  .ban-tag {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,68,102,0.1);
+    border: 1px solid rgba(255,68,102,0.3);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; color: #ff6680;
+  }
+  .ban-tag button {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,68,102,0.6); font-size: 14px;
+    line-height: 1; padding: 0; transition: color .12s;
+  }
+  .ban-tag button:hover { color: #ff4466; }
+  .ban-add-row { display: flex; gap: 8px; }
+  .ban-add-row input {
+    flex: 1; padding: 8px 12px; border-radius: 6px;
+    border: 1px solid rgba(255,68,102,0.3);
+    background: rgba(255,68,102,0.05);
+    color: var(--text); font-size: 13px; outline: none;
+    font-family: inherit;
+    transition: border .15s;
+  }
+  .ban-add-row input:focus { border-color: #ff4466; }
+  .ban-add-row input::placeholder { color: var(--text-muted); opacity: .6; }
+  .ban-add-btn {
+    padding: 8px 16px; border-radius: 6px;
+    border: 1px solid rgba(255,68,102,0.4);
+    background: rgba(255,68,102,0.1);
+    color: #ff4466; font-size: 13px; cursor: pointer;
+    font-family: inherit; font-weight: 600;
+    transition: all .15s;
+  }
+  .ban-add-btn:hover { background: rgba(255,68,102,0.2); }
+
   /* ===== レスポンシブ ===== */
   @media (max-width: 600px) {
     .table-wrap { margin: 0 16px 24px; }
@@ -482,6 +560,29 @@
     <input type="checkbox" id="publicModeToggle">
     <span class="toggle-slider"></span>
   </label>
+</div>
+
+<!-- ========== アク禁パネル ========== -->
+<div class="ban-panel" id="banPanel">
+  <div class="ban-panel-left">
+    <span class="ban-panel-icon">🚫</span>
+    <div>
+      <div class="ban-panel-title">アク禁管理</div>
+      <div class="ban-panel-desc" id="banPanelDesc">アク禁リスト: 読み込み中...</div>
+    </div>
+  </div>
+  <div class="ban-panel-actions">
+    <button class="ban-all-btn" id="banAllBtn" onclick="toggleAllBan()">全員アク禁</button>
+  </div>
+</div>
+
+<!-- アク禁リスト -->
+<div class="ban-list-wrap" id="banListWrap">
+  <div class="ban-tags" id="banTags"></div>
+  <div class="ban-add-row">
+    <input type="text" id="banNameInput" placeholder="アク禁するユーザー名...">
+    <button class="ban-add-btn" onclick="addBanName()">+ アク禁</button>
+  </div>
 </div>
 
 <!-- ========== ツールバー ========== -->
@@ -864,10 +965,98 @@
   });
 
   // ========================================
+  // アク禁管理
+  // ========================================
+  let banList = [];
+  let allBanned = false;
+
+  async function loadBanList() {
+    try {
+      const snap = await getDoc(doc(db, "config", "banList"));
+      if (snap.exists()) {
+        banList   = snap.data().names    || [];
+        allBanned = snap.data().allBanned || false;
+      }
+    } catch(e) { console.error(e); }
+    renderBanList();
+  }
+
+  async function saveBanList() {
+    try {
+      await setDoc(doc(db, "config", "banList"), { names: banList, allBanned });
+    } catch(e) { showToast("アク禁保存エラー: " + e.message); }
+  }
+
+  function renderBanList() {
+    const tagsEl = document.getElementById("banTags");
+    const panel  = document.getElementById("banPanel");
+    const btn    = document.getElementById("banAllBtn");
+    const desc   = document.getElementById("banPanelDesc");
+
+    // 全員アク禁の表示
+    if (allBanned) {
+      panel.classList.add("all-banned");
+      btn.classList.add("active");
+      btn.textContent = "✅ 全員アク禁中 (解除)";
+    } else {
+      panel.classList.remove("all-banned");
+      btn.classList.remove("active");
+      btn.textContent = "全員アク禁";
+    }
+    desc.textContent = "アク禁リスト: " + banList.length + "人" + (allBanned ? " ／ ⚠ 全員アク禁中" : "");
+
+    // タグ描画
+    if (banList.length === 0) {
+      tagsEl.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">アク禁ユーザーなし</span>';
+    } else {
+      tagsEl.innerHTML = banList.map((name, i) =>
+        '<div class="ban-tag">' + escapeHTML(name) +
+        '<button onclick="removeBan(' + i + ')">×</button></div>'
+      ).join('');
+    }
+  }
+
+  // アク禁追加
+  window.addBanName = async function() {
+    const input = document.getElementById("banNameInput");
+    const name  = input.value.trim();
+    if (!name) return;
+    if (banList.includes(name)) { showToast("既にアク禁済みです"); return; }
+    banList.push(name);
+    input.value = '';
+    await saveBanList();
+    renderBanList();
+    showToast("🚫 「" + name + "」をアク禁しました");
+  };
+
+  // アク禁解除
+  window.removeBan = async function(i) {
+    const name = banList[i];
+    banList.splice(i, 1);
+    await saveBanList();
+    renderBanList();
+    showToast("✅ 「" + name + "」のアク禁を解除しました");
+  };
+
+  // 全員アク禁トグル
+  window.toggleAllBan = async function() {
+    allBanned = !allBanned;
+    await saveBanList();
+    renderBanList();
+    showToast(allBanned ? "🚫 全員アク禁にしました" : "✅ 全員アク禁を解除しました");
+  };
+
+  // Enterキーでアク禁追加
+  document.getElementById("banNameInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") window.addBanName();
+  });
+
+  // ========================================
   // 初期ロード
   // ========================================
   loadPublicMode();
   loadUsers();
+  loadBanList();
 </script>
 </body>
 </html>
