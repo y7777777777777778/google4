@@ -378,11 +378,14 @@
   // peji.html を iframe で表示 / 非表示
   // ----------------------------------------
   function openPeji() {
-    // 別タブで直接URLに飛ぶ
-    hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
+    // 初回だけsrcをセット（2回目以降はそのまま再開）
+    if (!hiddenFrame.src || hiddenFrame.src === "about:blank" || hiddenFrame.src === "") {
+      hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
+    }
     hiddenFrame.style.display = "block";
   }
   function closePeji() {
+    // srcはリセットしない（再開できるように）
     hiddenFrame.style.display = "none";
   }
 
@@ -407,9 +410,21 @@
       return;
     }
 
-    // 登録済み → Firestore で status 確認
+    // ローカルキャッシュで即座に判定
+    const cachedStatus = localStorage.getItem("accessStatus");
+    if (cachedStatus === "ok") {
+      openPeji();
+      // バックグラウンドでFirestoreも確認（拒否されたら次回から反映）
+      getUserStatus(savedName).then(status => {
+        if (status !== "ok") localStorage.setItem("accessStatus", status || "wait");
+      }).catch(() => {});
+      return;
+    }
+
+    // キャッシュなし or wait → Firestore で確認
     try {
       const status = await getUserStatus(savedName);
+      if (status) localStorage.setItem("accessStatus", status);
 
       if (status === "ok") {
         openPeji();
@@ -420,6 +435,7 @@
       } else {
         // Firestoreに存在しない（削除済み）→ 再登録
         localStorage.removeItem("accessUserName");
+        localStorage.removeItem("accessStatus");
         openModal();
       }
     } catch (err) {
@@ -464,6 +480,7 @@
       // 重複なし → 登録
       const isPublic = await registerUser(name);
       localStorage.setItem("accessUserName", name);
+      localStorage.setItem("accessStatus", isPublic ? "ok" : "wait");
       closeModal();
       if (isPublic) {
         // 一般公開モード → そのままpeji.htmlを開く
