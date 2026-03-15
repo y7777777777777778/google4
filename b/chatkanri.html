@@ -622,6 +622,17 @@
     try {
       const snap = await getDoc(doc(db, "config", "commands"));
       cmdList = snap.exists() ? (snap.data().list || []) : [];
+      // 既存データのキーからスラッシュを除去して自動修正
+      let fixed = false;
+      cmdList = cmdList.map(c => {
+        const cleanKey = c.key.replace(/^\/+/, '');
+        if (cleanKey !== c.key) { fixed = true; }
+        return { ...c, key: cleanKey };
+      });
+      if (fixed) {
+        await saveCmds();
+        showToast('✅ コマンドキーを自動修正しました');
+      }
     } catch(e) { cmdList = []; }
     renderCmdTable();
   }
