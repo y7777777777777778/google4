@@ -964,7 +964,13 @@
   // ── コマンド取得（リアルタイム監視） ──
   let commandsList = [];
   onSnapshot(doc(db, "config", "commands"), snap => {
-    commandsList = snap.exists() ? (snap.data().list || []) : [];
+    if (snap.exists()) {
+      const data = snap.data();
+      // list または commands フィールド両方に対応
+      commandsList = data.list || data.commands || [];
+    } else {
+      commandsList = [];
+    }
   });
 
   // ── 送信 ──
@@ -976,19 +982,21 @@
     // コマンド判定（/から始まる）
     if (text.startsWith('/')) {
       const cmdKey = text.slice(1).toLowerCase().trim();
-      const cmd = commandsList.find(c => c.key.toLowerCase() === cmdKey);
+      const cmd = commandsList.find(c => c.key && c.key.toLowerCase() === cmdKey);
       if (cmd) {
         input.value = '';
         try {
           await addDoc(collection(db, "chat"), {
-            name: cmd.name, text: cmd.message, ts: serverTimestamp()
+            name: cmd.name || 'BOT',
+            text: cmd.message || cmd.text || '',
+            ts:   serverTimestamp()
           });
         } catch(e) { console.error(e); }
         return;
       } else {
         // コマンドが見つからない
         input.style.borderColor = '#ffb300';
-        input.placeholder = '⚠ コマンドが見つかりません: ' + text;
+        input.placeholder = '⚠ /' + cmdKey + ' は未登録です';
         input.value = '';
         setTimeout(() => {
           input.style.borderColor = '';
