@@ -201,7 +201,8 @@
     .header {
       position: relative; z-index: 10;
       display: flex; align-items: center; justify-content: space-between;
-      height: 54px; padding: 0 24px;
+      gap: 12px;
+      height: 54px; padding: 0 20px;
       background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,255,231,0.02) 100%);
       border-bottom: 1px solid var(--border2);
       flex-shrink: 0;
@@ -210,6 +211,177 @@
     body.light .header {
       background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(0,180,200,0.04) 100%);
     }
+
+    /* ── ヘッダー内チャットエリア ── */
+    .header-chat {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    /* 流れるテロップ */
+    .ticker-wrap {
+      flex: 1; min-width: 0;
+      height: 30px;
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      background: rgba(0,255,231,0.03);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    body.light .ticker-wrap { background: #f5f5f5; }
+    .ticker-dot {
+      position: absolute; left: 8px; top: 50%;
+      transform: translateY(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #3dd68c; box-shadow: 0 0 6px #3dd68c;
+      animation: blink 2s ease-in-out infinite; z-index: 1;
+    }
+    body.light .ticker-dot { background: #1f9e62; box-shadow: none; }
+    .ticker-inner {
+      position: absolute; left: 22px; right: 0; top: 0; bottom: 0;
+      display: flex; align-items: center;
+      overflow: hidden;
+    }
+    .ticker-text {
+      font-family: var(--mono); font-size: 11px;
+      color: var(--accent); white-space: nowrap;
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      will-change: transform;
+    }
+    /* チャットボタン */
+    #chatOpenBtn {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .1em; padding: 0 14px;
+      border: 1px solid var(--border2); border-radius: 4px;
+      background: rgba(0,255,231,0.06); color: var(--accent);
+      cursor: pointer; transition: all .2s;
+      text-transform: uppercase; height: 30px;
+      flex-shrink: 0; white-space: nowrap; position: relative;
+    }
+    #chatOpenBtn:hover {
+      background: rgba(0,255,231,0.14); border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(0,255,231,0.15);
+    }
+    body.light #chatOpenBtn { background: #f0f0f0; color: #333; border-color: #ddd; box-shadow: none; }
+    .chat-unread {
+      position: absolute; top: -5px; right: -5px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--red); color: #fff;
+      font-size: 9px; display: none;
+      align-items: center; justify-content: center;
+    }
+    .chat-unread.show { display: flex; }
+
+    /* ── チャットポップアップ ── */
+    #chatPopup {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      width: 320px; height: 400px;
+      background: #0a0e1a;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      z-index: 100;
+      display: none; flex-direction: column;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,231,0.1);
+      animation: popIn .2s ease;
+    }
+    body.light #chatPopup { background: #fff; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+    #chatPopup.open { display: flex; }
+    @keyframes popIn {
+      from { opacity:0; transform: scale(0.92) translateY(10px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .popup-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; height: 40px; flex-shrink: 0;
+      border-bottom: 1px solid var(--border2);
+    }
+    .popup-title {
+      font-family: var(--mono); font-size: 11px;
+      letter-spacing: .12em; color: var(--accent);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .popup-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #3dd68c; box-shadow: 0 0 6px #3dd68c;
+      animation: blink 2s ease-in-out infinite;
+    }
+    body.light .popup-dot { background: #1f9e62; box-shadow: none; }
+    .popup-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--dim); font-size: 16px; line-height: 1;
+      padding: 4px 6px; transition: color .15s;
+    }
+    .popup-close:hover { color: var(--red); }
+    #chatMsgs {
+      flex: 1; overflow-y: auto;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 5px;
+    }
+    #chatMsgs::-webkit-scrollbar { width: 3px; }
+    #chatMsgs::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    .chat-msg {
+      display: flex; align-items: baseline; gap: 7px;
+      font-size: 11px; line-height: 1.5;
+    }
+    .chat-msg-name {
+      font-family: var(--mono); font-size: 10px;
+      color: var(--accent2); flex-shrink: 0; letter-spacing: .03em;
+    }
+    .chat-msg-name.me { color: var(--accent); }
+    .chat-msg-text { color: var(--text); word-break: break-all; flex: 1; }
+    .chat-msg-time {
+      font-family: var(--mono); font-size: 9px;
+      color: var(--dim2); flex-shrink: 0;
+    }
+    .popup-input-row {
+      display: flex; flex-direction: column; gap: 5px;
+      padding: 8px 10px;
+      border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+    .popup-name-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .popup-name-label {
+      font-family: var(--mono); font-size: 9px;
+      letter-spacing: .1em; color: var(--dim);
+      white-space: nowrap; text-transform: uppercase;
+    }
+    #chatName {
+      flex: 1;
+      background: rgba(0,255,231,0.03);
+      border: 1px solid var(--border); border-radius: 4px;
+      color: var(--accent); font-family: var(--mono);
+      font-size: 11px; padding: 4px 8px; outline: none;
+      transition: border .15s;
+    }
+    #chatName:focus { border-color: var(--accent); }
+    body.light #chatName { background: #f9f9f9; color: #333; }
+    .popup-msg-row {
+      display: flex; gap: 6px;
+    }
+    #chatInput {
+      flex: 1; background: rgba(0,255,231,0.04);
+      border: 1px solid var(--border2); border-radius: 4px;
+      color: var(--text); font-family: var(--mono);
+      font-size: 11px; padding: 6px 10px; outline: none;
+      transition: border .15s;
+    }
+    #chatInput:focus { border-color: var(--accent); }
+    #chatInput::placeholder { color: var(--dim2); }
+    body.light #chatInput { background: #f5f5f5; }
+    #chatSend {
+      font-family: var(--mono); font-size: 10px;
+      letter-spacing: .06em; padding: 6px 12px;
+      border: 1px solid var(--border2); border-radius: 4px;
+      background: rgba(0,255,231,0.08); color: var(--accent);
+      cursor: pointer; transition: all .15s; text-transform: uppercase;
+    }
+    #chatSend:hover {
+      background: rgba(0,255,231,0.18); border-color: var(--accent);
+    }
+    body.light #chatSend { background: #f0f0f0; color: #333; border-color: #ddd; }
 
     .header-logo {
       display: flex; align-items: center; gap: 12px;
@@ -464,6 +636,7 @@
     }
     #iframe { width:100%; flex:1; border:none; display:block; }
 
+
     /* ── アニメーション ── */
     @keyframes fadeUp {
       from { opacity:0; transform:translateY(10px); }
@@ -499,6 +672,20 @@
     </div>
     <span class="logo-text">SECRET</span>
   </div>
+  <!-- ヘッダー内チャット -->
+  <div class="header-chat">
+    <div class="ticker-wrap" onclick="openChatPopup()">
+      <div class="ticker-dot"></div>
+      <div class="ticker-inner">
+        <!-- テロップはJSで動的に追加 -->
+      </div>
+    </div>
+    <button id="chatOpenBtn" onclick="openChatPopup()">
+      💬 CHAT
+      <span class="chat-unread" id="chatUnread">0</span>
+    </button>
+  </div>
+
   <div class="header-right">
     <button class="hbtn" onclick="goHome()">[ HOME ]</button>
     <button class="hbtn hbtn-hide" onclick="hidePanel()">[ HIDE ]</button>
@@ -510,6 +697,31 @@
         <div class="t-thumb"></div>
       </label>
       <span class="t-ico">☀︎</span>
+    </div>
+  </div>
+</div>
+
+<!-- チャットポップアップ -->
+<div id="chatPopup">
+  <div class="popup-header">
+    <div class="popup-title">
+      <div class="popup-dot"></div>
+      LIVE CHAT
+    </div>
+    <button class="popup-close" onclick="closeChatPopup()">✕</button>
+  </div>
+  <div id="chatMsgs"></div>
+  <div class="popup-input-row">
+    <div class="popup-name-row">
+      <span class="popup-name-label">NAME:</span>
+      <input id="chatName" placeholder="名無し" maxlength="20">
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.06em;padding:0 2px;">
+      ⚠ 本名は使用しないでください
+    </div>
+    <div class="popup-msg-row">
+      <input id="chatInput" placeholder="メッセージ..." maxlength="100">
+      <button id="chatSend">SEND</button>
     </div>
   </div>
 </div>
@@ -685,6 +897,239 @@
     document.getElementById('themeCheck').checked = light;
     if (light) { document.body.classList.add('light'); document.getElementById('tIco').textContent = '☀︎'; }
   };
+
+  /* ── チャットポップアップ開閉 ── */
+  function openChatPopup() {
+    document.getElementById('chatPopup').classList.add('open');
+    document.getElementById('chatUnread').classList.remove('show');
+    document.getElementById('chatUnread').textContent = '0';
+    setTimeout(() => {
+      const n = document.getElementById('chatName');
+      if (!n.value.trim()) { n.focus(); } else { document.getElementById('chatInput').focus(); }
+    }, 100);
+  }
+  function closeChatPopup() {
+    document.getElementById('chatPopup').classList.remove('open');
+  }
+</script>
+
+<!-- Firebase チャット -->
+<script type="module">
+  import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, query, orderBy,
+           limit, onSnapshot, serverTimestamp, doc, getDoc }
+    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAdQbSXJbRkd0C29O0hW5FgHERR_Vh9FZw",
+    authDomain:        "fir-d5882.firebaseapp.com",
+    projectId:         "fir-d5882",
+    storageBucket:     "fir-d5882.firebasestorage.app",
+    messagingSenderId: "68351757634",
+    appId:             "1:68351757634:web:0e33ac84b7f1671939ccdb"
+  };
+
+  const app = initializeApp(firebaseConfig, "chat");
+  const db  = getFirestore(app);
+
+  // 名前：チャット専用の保存名 → なければ「名無し」
+  const savedChatName = localStorage.getItem("chatName") || "名無し";
+
+  // 名前入力欄に初期値セット
+  const nameEl = document.getElementById('chatName');
+  nameEl.value = savedChatName;
+
+  // 名前変更時にlocalStorageに保存
+  nameEl.addEventListener('change', () => {
+    const n = nameEl.value.trim();
+    if (n) localStorage.setItem("chatName", n);
+  });
+
+  function getMyName() {
+    return nameEl.value.trim() || savedChatName;
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── NGワード取得 ──
+  let ngWordsList = [];
+  async function loadNgWords() {
+    try {
+      const { getDoc, doc: fsDoc } = await import("https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js");
+      const snap = await getDoc(fsDoc(db, "config", "ngWords"));
+      ngWordsList = snap.exists() ? (snap.data().words || []) : [];
+    } catch(e) { ngWordsList = []; }
+  }
+  loadNgWords();
+
+  // ── 送信 ──
+  async function sendMsg() {
+    const input  = document.getElementById('chatInput');
+    const text   = input.value.trim();
+    if (!text) return;
+
+    // NGワードチェック
+    const hitNg = ngWordsList.find(w => text.toLowerCase().includes(w.toLowerCase()));
+    if (hitNg) {
+      input.style.borderColor = '#ff4466';
+      input.placeholder = '⚠ NGワードが含まれています';
+      input.value = '';
+      setTimeout(() => {
+        input.style.borderColor = '';
+        input.placeholder = 'メッセージ...';
+      }, 2500);
+      return;
+    }
+
+    input.value = '';
+    try {
+      await addDoc(collection(db, "chat"), {
+        name: getMyName(), text: text, ts: serverTimestamp()
+      });
+    } catch(e) { console.error(e); }
+  }
+  document.getElementById('chatInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMsg();
+  });
+  document.getElementById('chatSend').addEventListener('click', sendMsg);
+
+  // ── リアルタイム受信 ──
+  let lastCount = 0;
+  let unread    = 0;
+  const msgsEl       = document.getElementById('chatMsgs');
+  const tickerInner  = document.querySelector('.ticker-inner');
+  let   tickerQueue  = [];
+  let   tickerRunning = false;
+
+  // ── テロップ: requestAnimationFrameで複数同時流し ──
+  let tickerSpeed = 15; // 秒（chatkanriで変更可能）
+  const tickerItems = []; // { el, x }
+  let tickerRAF = null;
+  let tickerWrapW = 0;
+
+  function getTickerWrapWidth() {
+    return tickerInner.parentElement ? tickerInner.parentElement.offsetWidth : 400;
+  }
+
+  function tickerLoop() {
+    tickerWrapW = getTickerWrapWidth();
+    // pxPerFrame: 画面幅を tickerSpeed 秒で横断する速さ
+    const pxPerFrame = (tickerWrapW + 600) / (tickerSpeed * 60);
+    let alive = false;
+    for (let i = tickerItems.length - 1; i >= 0; i--) {
+      const item = tickerItems[i];
+      item.x -= pxPerFrame;
+      item.el.style.transform = 'translateX(' + item.x + 'px) translateY(-50%)';
+      // 画面左端を完全に超えたら削除
+      if (item.x + item.el.offsetWidth < -10) {
+        item.el.remove();
+        tickerItems.splice(i, 1);
+      } else {
+        alive = true;
+      }
+    }
+    if (tickerItems.length > 0 || alive) {
+      tickerRAF = requestAnimationFrame(tickerLoop);
+    } else {
+      tickerRAF = null;
+    }
+  }
+
+  function launchTicker(text, delayX = 0) {
+    const span = document.createElement('span');
+    span.className = 'ticker-text';
+    span.textContent = text;
+    tickerInner.appendChild(span);
+    // 右端の外側から開始（複数ある場合はさらに右へずらす）
+    tickerWrapW = getTickerWrapWidth();
+    const startX = tickerWrapW + delayX;
+    span.style.transform = 'translateX(' + startX + 'px) translateY(-50%)';
+    tickerItems.push({ el: span, x: startX });
+    if (!tickerRAF) tickerRAF = requestAnimationFrame(tickerLoop);
+  }
+
+  function runTicker() {
+    if (tickerQueue.length === 0) { tickerRunning = false; return; }
+    tickerRunning = true;
+    // 各メッセージを間隔をあけて並べる（重ならないよう200px間隔）
+    tickerQueue.forEach((text, i) => {
+      launchTicker(text, i * 240);
+    });
+    tickerQueue = [];
+    tickerRunning = false;
+  }
+
+  // チャット設定監視（閉鎖・BAN）
+  onSnapshot(doc(db, "config", "chatSettings"), snap => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (data.tickerSpeed) tickerSpeed = data.tickerSpeed;
+    // チャット閉鎖チェック
+    const inputEl = document.getElementById('chatInput');
+    const sendEl  = document.getElementById('chatSend');
+    const nameEl2 = document.getElementById('chatName');
+    if (data.closed) {
+      inputEl.disabled = true; sendEl.disabled = true; nameEl2.disabled = true;
+      inputEl.placeholder = '【チャット閉鎖中】';
+    } else {
+      inputEl.disabled = false; sendEl.disabled = false; nameEl2.disabled = false;
+      inputEl.placeholder = 'メッセージ...';
+    }
+    // BANチェック
+    const myN = getMyName();
+    const banned = data.banned || [];
+    if (banned.includes(myN)) {
+      inputEl.disabled = true; sendEl.disabled = true;
+      inputEl.placeholder = '【BANされています】';
+    }
+  });
+
+  const q = query(collection(db, "chat"), orderBy("ts", "desc"), limit(50));
+  onSnapshot(q, snap => {
+    const msgs = [];
+    snap.forEach(d => msgs.push({ id: d.id, ...d.data() }));
+    msgs.reverse();
+
+    // ── ポップアップ内メッセージ描画 ──
+    msgsEl.innerHTML = msgs.map(m => {
+      const isMe = m.name === getMyName();
+      const time = m.ts
+        ? new Date(m.ts.seconds * 1000).toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'})
+        : '';
+      const cls = isMe ? ' me' : '';
+      return '<div class="chat-msg">'
+        + '<span class="chat-msg-name' + cls + '">' + escHtml(m.name) + '</span>'
+        + '<span class="chat-msg-text">' + escHtml(m.text) + '</span>'
+        + '<span class="chat-msg-time">' + time + '</span>'
+        + '</div>';
+    }).join('');
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+
+    // ── テロップキュー：新着を末尾に追加して順番に流す ──
+    if (msgs.length > lastCount && lastCount !== 0) {
+      const newMsgs = msgs.slice(lastCount);
+      newMsgs.forEach(m => {
+        tickerQueue.push(m.name + ': ' + m.text);
+      });
+      if (!tickerRunning) runTicker();
+    }
+
+    // ── 未読バッジ（ポップアップが閉じているとき） ──
+    if (msgs.length > lastCount && lastCount !== 0) {
+      const popup = document.getElementById('chatPopup');
+      if (!popup.classList.contains('open')) {
+        unread += msgs.length - lastCount;
+        const badge = document.getElementById('chatUnread');
+        badge.textContent = unread > 9 ? '9+' : unread;
+        badge.classList.add('show');
+      }
+    }
+    lastCount = msgs.length;
+  });
 </script>
 </body>
 </html>
