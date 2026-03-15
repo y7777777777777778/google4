@@ -955,22 +955,48 @@
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── NGワード取得 ──
+  // ── NGワード取得（リアルタイム監視） ──
   let ngWordsList = [];
-  async function loadNgWords() {
-    try {
-      const { getDoc, doc: fsDoc } = await import("https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js");
-      const snap = await getDoc(fsDoc(db, "config", "ngWords"));
-      ngWordsList = snap.exists() ? (snap.data().words || []) : [];
-    } catch(e) { ngWordsList = []; }
-  }
-  loadNgWords();
+  onSnapshot(doc(db, "config", "ngWords"), snap => {
+    ngWordsList = snap.exists() ? (snap.data().words || []) : [];
+  });
+
+  // ── コマンド取得（リアルタイム監視） ──
+  let commandsList = [];
+  onSnapshot(doc(db, "config", "commands"), snap => {
+    commandsList = snap.exists() ? (snap.data().list || []) : [];
+  });
 
   // ── 送信 ──
   async function sendMsg() {
-    const input  = document.getElementById('chatInput');
-    const text   = input.value.trim();
+    const input = document.getElementById('chatInput');
+    const text  = input.value.trim();
     if (!text) return;
+
+    // コマンド判定（/から始まる）
+    if (text.startsWith('/')) {
+      const cmdKey = text.slice(1).toLowerCase().trim();
+      const cmd = commandsList.find(c => c.key.toLowerCase() === cmdKey);
+      if (cmd) {
+        input.value = '';
+        try {
+          await addDoc(collection(db, "chat"), {
+            name: cmd.name, text: cmd.message, ts: serverTimestamp()
+          });
+        } catch(e) { console.error(e); }
+        return;
+      } else {
+        // コマンドが見つからない
+        input.style.borderColor = '#ffb300';
+        input.placeholder = '⚠ コマンドが見つかりません: ' + text;
+        input.value = '';
+        setTimeout(() => {
+          input.style.borderColor = '';
+          input.placeholder = 'メッセージ...';
+        }, 2500);
+        return;
+      }
+    }
 
     // NGワードチェック
     const hitNg = ngWordsList.find(w => text.toLowerCase().includes(w.toLowerCase()));
