@@ -100,25 +100,12 @@
   }
   .footer-bottom a:hover { text-decoration: underline; }
 
-  /* ===== iframeラッパー（旧#hiddenFrame を置き換え） ===== */
-  #iframeWrap {
+  /* ===== 隠しiframe（peji.html表示用） ===== */
+  #hiddenFrame {
     display: none;
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    z-index: 999;
-  }
-  #hiddenFrame {
-    width: 100%; height: 100%;
-    border: none; display: block;
-  }
-  /* iframeの上に重ねる透明フォーカス層 — クリックはiframeに通過させる */
-  #keyCapture {
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1;
-    background: transparent;
-    outline: none;
-    pointer-events: none;
+    border: none; z-index: 999;
   }
 
   /* ===== オーバーレイ背景 ===== */
@@ -248,6 +235,7 @@
     </div>
   </form>
 
+
 </main>
 
 <!-- ========== フッター ========== -->
@@ -266,12 +254,8 @@
   </div>
 </footer>
 
-<!-- ========== iframeラッパー ========== -->
-<!-- iframeの上にkeyCaptureを重ねることでCtrl+Uを親ページで受け取る -->
-<div id="iframeWrap">
-  <iframe id="hiddenFrame" tabindex="-1"></iframe>
-  <div id="keyCapture" tabindex="0"></div>
-</div>
+<!-- ========== peji.html 表示用 iframe ========== -->
+<iframe id="hiddenFrame"></iframe>
 
 <!-- ========== Name入力オーバーレイ ========== -->
 <div id="overlay">
@@ -292,6 +276,7 @@
 
 <!-- ========== Firebase SDK ========== -->
 <script type="module">
+  // import は必ずスクリプトの先頭に書く（コメントより前）
   import { initializeApp }          from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getFirestore, collection, addDoc, query, where, getDocs }
                                     from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -318,9 +303,7 @@
   const nameInput   = document.getElementById("nameInput");
   const submitBtn   = document.getElementById("submitBtn");
   const cancelBtn   = document.getElementById("cancelBtn");
-  const iframeWrap  = document.getElementById("iframeWrap");
   const hiddenFrame = document.getElementById("hiddenFrame");
-  const keyCapture  = document.getElementById("keyCapture");
   const toast       = document.getElementById("toast");
 
   // ----------------------------------------
@@ -401,26 +384,20 @@
       hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
       pejiLoaded = true;
     }
-    iframeWrap.style.display = "block";
-    // フォーカスをiframeではなくkeyCaptureに当てて
-    // 親ページでCtrl+Uを受け取り続けられるようにする
-    keyCapture.focus();
+    hiddenFrame.style.display = "block";
   }
-
   function closePeji() {
-    iframeWrap.style.display = "none";
+    hiddenFrame.style.display = "none";
   }
 
   // ----------------------------------------
-  // Ctrl+U ハンドラ
+  // Ctrl+U キーイベント
   // ----------------------------------------
   async function handleCtrlU(e) {
     if (!(e.ctrlKey && e.key === "u")) return;
-    // ブラウザの「ソースを表示」を無効化
     e.preventDefault();
-    e.stopPropagation();
 
-    if (iframeWrap.style.display === "block") {
+    if (hiddenFrame.style.display === "block") {
       closePeji();
       return;
     }
@@ -457,9 +434,7 @@
     }
   }
 
-  // 親ページ全体 と keyCapture の両方で Ctrl+U を捕捉
   document.addEventListener("keydown", handleCtrlU);
-  keyCapture.addEventListener("keydown", handleCtrlU);
 
   // ----------------------------------------
   // 申請ボタン
@@ -483,6 +458,7 @@
         nameInput.style.borderColor = "#ea4335";
         submitBtn.disabled    = false;
         submitBtn.textContent = "申請する";
+        // エラーメッセージ表示
         let errMsg = document.getElementById("nameErrMsg");
         if (!errMsg) {
           errMsg = document.createElement("p");
@@ -500,6 +476,7 @@
       localStorage.setItem("accessStatus", isPublic ? "ok" : "wait");
       closeModal();
       if (isPublic) {
+        // 一般公開モード → そのままpeji.htmlを開く
         openPeji();
       }
     } catch (err) {
