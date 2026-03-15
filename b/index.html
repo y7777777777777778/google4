@@ -377,64 +377,54 @@
   // ----------------------------------------
   // peji.html を iframe で表示 / 非表示
   // ----------------------------------------
+  let pejiLoaded = false;
+
   function openPeji() {
-    // 初回だけsrcをセット（2回目以降はそのまま再開）
-    if (!hiddenFrame.src || hiddenFrame.src === "about:blank" || hiddenFrame.src === "") {
+    if (!pejiLoaded) {
       hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
+      pejiLoaded = true;
     }
     hiddenFrame.style.display = "block";
   }
   function closePeji() {
-    // srcはリセットしない（再開できるように）
     hiddenFrame.style.display = "none";
   }
 
   // ----------------------------------------
   // Ctrl+U キーイベント
-  // iframeにフォーカスが移っても検知できるようにwindowとdocument両方に登録
   // ----------------------------------------
   async function handleCtrlU(e) {
     if (!(e.ctrlKey && e.key === "u")) return;
     e.preventDefault();
 
-    // peji表示中なら閉じる
     if (hiddenFrame.style.display === "block") {
       closePeji();
       return;
     }
 
     const savedName = localStorage.getItem("accessUserName");
-
-    // 未登録 → Name入力モーダル
     if (!savedName) {
       openModal();
       return;
     }
 
-    // ローカルキャッシュで即座に判定
+    // キャッシュで即判定
     const cachedStatus = localStorage.getItem("accessStatus");
     if (cachedStatus === "ok") {
       openPeji();
-      // バックグラウンドでFirestoreも確認（拒否されたら次回から反映）
-      getUserStatus(savedName).then(status => {
-        if (status !== "ok") localStorage.setItem("accessStatus", status || "wait");
+      getUserStatus(savedName).then(s => {
+        if (s && s !== "ok") localStorage.setItem("accessStatus", s);
       }).catch(() => {});
       return;
     }
 
-    // キャッシュなし or wait → Firestore で確認
+    // Firestoreで確認
     try {
       const status = await getUserStatus(savedName);
       if (status) localStorage.setItem("accessStatus", status);
-
       if (status === "ok") {
         openPeji();
-      } else if (status === "ng") {
-        // 何もしない（仕様通り）
-      } else if (status === "wait") {
-        // 何もしない
-      } else {
-        // Firestoreに存在しない（削除済み）→ 再登録
+      } else if (!status) {
         localStorage.removeItem("accessUserName");
         localStorage.removeItem("accessStatus");
         openModal();
@@ -445,19 +435,6 @@
   }
 
   document.addEventListener("keydown", handleCtrlU);
-  window.addEventListener("keydown", handleCtrlU);
-
-  // iframeにフォーカスが移ったとき、親にCtrl+Uを伝える
-  hiddenFrame.addEventListener("load", function() {
-    try {
-      hiddenFrame.contentWindow.addEventListener("keydown", function(e) {
-        if (e.ctrlKey && e.key === "u") {
-          e.preventDefault();
-          closePeji();
-        }
-      });
-    } catch(err) {}
-  });
 
   // ----------------------------------------
   // 申請ボタン
