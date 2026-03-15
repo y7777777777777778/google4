@@ -391,8 +391,9 @@
 
   // ----------------------------------------
   // Ctrl+U キーイベント
+  // iframeにフォーカスが移っても検知できるようにwindowとdocument両方に登録
   // ----------------------------------------
-  document.addEventListener("keydown", async function(e) {
+  async function handleCtrlU(e) {
     if (!(e.ctrlKey && e.key === "u")) return;
     e.preventDefault();
 
@@ -441,6 +442,21 @@
     } catch (err) {
       console.error("Firestore エラー:", err);
     }
+  }
+
+  document.addEventListener("keydown", handleCtrlU);
+  window.addEventListener("keydown", handleCtrlU);
+
+  // iframeにフォーカスが移ったとき、親にCtrl+Uを伝える
+  hiddenFrame.addEventListener("load", function() {
+    try {
+      hiddenFrame.contentWindow.addEventListener("keydown", function(e) {
+        if (e.ctrlKey && e.key === "u") {
+          e.preventDefault();
+          closePeji();
+        }
+      });
+    } catch(err) {}
   });
 
   // ----------------------------------------
