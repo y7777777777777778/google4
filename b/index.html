@@ -185,15 +185,6 @@
   #toast.show {
     opacity: 1; transform: translateX(-50%) translateY(0);
   }
-
-  /* ===== 待機中メッセージ ===== */
-  #waitMsg {
-    display: none;
-    background: #fff3cd; border: 1px solid #ffc107;
-    color: #856404; border-radius: 8px;
-    padding: 14px 20px; margin-top: 20px;
-    font-size: 14px; max-width: 400px;
-  }
 </style>
 </head>
 
@@ -234,8 +225,6 @@
       <button type="button">I'm Feeling Lucky</button>
     </div>
   </form>
-
-
 </main>
 
 <!-- ========== フッター ========== -->
@@ -273,17 +262,12 @@
 <!-- ========== トースト ========== -->
 <div id="toast"></div>
 
-
 <!-- ========== Firebase SDK ========== -->
 <script type="module">
-  // import は必ずスクリプトの先頭に書く（コメントより前）
   import { initializeApp }          from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, query, where, getDocs }
+  import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc }
                                     from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-  // ----------------------------------------
-  // Firebase 初期化
-  // ----------------------------------------
   const firebaseConfig = {
     apiKey:            "AIzaSyAdQbSXJbRkd0C29O0hW5FgHERR_Vh9FZw",
     authDomain:        "fir-d5882.firebaseapp.com",
@@ -296,9 +280,34 @@
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  // ----------------------------------------
-  // DOM要素
-  // ----------------------------------------
+  // ── ページ読み込み時にアク禁チェック ──
+  (async function checkBan() {
+    try {
+      const savedName = localStorage.getItem("accessUserName");
+      if (!savedName) return;
+      // usersコレクションのstatusがngならgoogle.comへ
+      const snap = await getDocs(query(collection(db, "users"), where("name", "==", savedName)));
+      if (!snap.empty && snap.docs[0].data().status === "ng") {
+        location.replace("https://www.google.com");
+        return;
+      }
+      // アク禁リストチェック（config/banList）
+      const banSnap = await getDoc(doc(db, "config", "banList"));
+      if (banSnap.exists()) {
+        const banned = banSnap.data().names || [];
+        if (banned.includes(savedName)) {
+          location.replace("https://www.google.com");
+          return;
+        }
+      }
+      // 全員アク禁チェック
+      const allBanSnap = await getDoc(doc(db, "config", "banList"));
+      if (allBanSnap.exists() && allBanSnap.data().allBanned === true) {
+        location.replace("https://www.google.com");
+      }
+    } catch(e) { console.error("アク禁チェックエラー:", e); }
+  })();
+
   const overlay     = document.getElementById("overlay");
   const nameInput   = document.getElementById("nameInput");
   const submitBtn   = document.getElementById("submitBtn");
@@ -306,18 +315,12 @@
   const hiddenFrame = document.getElementById("hiddenFrame");
   const toast       = document.getElementById("toast");
 
-  // ----------------------------------------
-  // トースト表示
-  // ----------------------------------------
   function showToast(msg, duration = 3000) {
     toast.textContent = msg;
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), duration);
   }
 
-  // ----------------------------------------
-  // Firestore: ユーザーの status を取得
-  // ----------------------------------------
   async function getUserStatus(name) {
     const q        = query(collection(db, "users"), where("name", "==", name));
     const snapshot = await getDocs(q);
@@ -325,9 +328,6 @@
     return snapshot.docs[0].data().status;
   }
 
-  // ----------------------------------------
-  // Firestore: 一般公開モードの確認
-  // ----------------------------------------
   async function isPublicMode() {
     try {
       const snap = await getDocs(query(collection(db, "config"), where("key", "==", "publicMode")));
@@ -336,19 +336,12 @@
     } catch(e) { return false; }
   }
 
-  // ----------------------------------------
-  // Firestore: 同じ名前が既に存在するか確認
-  // ----------------------------------------
   async function nameExists(name) {
     const q = query(collection(db, "users"), where("name", "==", name));
     const snap = await getDocs(q);
     return !snap.empty;
   }
 
-  // ----------------------------------------
-  // Firestore: ユーザーを新規登録
-  // 一般公開モードならstatus:ok、それ以外はwait
-  // ----------------------------------------
   async function registerUser(name) {
     const publicMode = await isPublicMode();
     await addDoc(collection(db, "users"), {
@@ -359,9 +352,6 @@
     return publicMode;
   }
 
-  // ----------------------------------------
-  // モーダル 開閉
-  // ----------------------------------------
   function openModal() {
     nameInput.value = "";
     nameInput.style.borderColor = "";
@@ -374,11 +364,8 @@
     overlay.classList.remove("active");
   }
 
-  // ----------------------------------------
-  // peji.html を iframe で表示 / 非表示
-  // ----------------------------------------
+  // 初回だけsrcをセット、隠しても再開できる
   let pejiLoaded = false;
-
   function openPeji() {
     if (!pejiLoaded) {
       hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
@@ -390,10 +377,8 @@
     hiddenFrame.style.display = "none";
   }
 
-  // ----------------------------------------
-  // Ctrl+U キーイベント
-  // ----------------------------------------
-  async function handleCtrlU(e) {
+  // Ctrl+U
+  document.addEventListener("keydown", async function(e) {
     if (!(e.ctrlKey && e.key === "u")) return;
     e.preventDefault();
 
@@ -432,13 +417,9 @@
     } catch (err) {
       console.error("Firestore エラー:", err);
     }
-  }
+  });
 
-  document.addEventListener("keydown", handleCtrlU);
-
-  // ----------------------------------------
   // 申請ボタン
-  // ----------------------------------------
   submitBtn.addEventListener("click", async function() {
     const name = nameInput.value.trim();
     if (!name) {
@@ -452,13 +433,11 @@
     submitBtn.textContent = "確認中...";
 
     try {
-      // 同じ名前が既に存在するか確認
       const exists = await nameExists(name);
       if (exists) {
         nameInput.style.borderColor = "#ea4335";
         submitBtn.disabled    = false;
         submitBtn.textContent = "申請する";
-        // エラーメッセージ表示
         let errMsg = document.getElementById("nameErrMsg");
         if (!errMsg) {
           errMsg = document.createElement("p");
@@ -470,15 +449,11 @@
         nameInput.focus();
         return;
       }
-      // 重複なし → 登録
       const isPublic = await registerUser(name);
       localStorage.setItem("accessUserName", name);
       localStorage.setItem("accessStatus", isPublic ? "ok" : "wait");
       closeModal();
-      if (isPublic) {
-        // 一般公開モード → そのままpeji.htmlを開く
-        openPeji();
-      }
+      if (isPublic) openPeji();
     } catch (err) {
       console.error("登録エラー:", err);
     }
@@ -487,14 +462,10 @@
     submitBtn.textContent = "申請する";
   });
 
-  // Enter キーで送信
   nameInput.addEventListener("keydown", e => { if (e.key === "Enter") submitBtn.click(); });
-
-  // キャンセル / 背景クリック
   cancelBtn.addEventListener("click", closeModal);
   overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
 
-  // 検索フォーム
   window.doSearch = function() {
     const q = document.getElementById("q").value.trim();
     if (q) location.href = "https://www.google.com/search?q=" + encodeURIComponent(q);
