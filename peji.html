@@ -3,276 +3,688 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>隠しページ</title>
+  <title>Secret Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #ffffff;
-      --text: #222;
-      --card: #ffffff;
-      --border: #ddd;
-      --button-bg: #ffffff;
-      --button-text: #222;
-      --shadow: rgba(0,0,0,0.08);
+      --bg:      #020408;
+      --panel:   rgba(0,255,231,0.03);
+      --border:  rgba(0,255,231,0.12);
+      --border2: rgba(0,255,231,0.25);
+      --accent:  #00ffe7;
+      --accent2: #00a8ff;
+      --text:    #c8f0ec;
+      --dim:     #3a6660;
+      --dim2:    #1e3835;
+      --red:     #ff4466;
+      --mono:    'Share Tech Mono', monospace;
+      --head:    'Rajdhani', sans-serif;
     }
-
-    body.dark {
-      --bg: #121212;
-      --text: #eaeaea;
-      --card: #1e1e1e;
-      --border: #444;
-      --button-bg: #1e1e1e;
-      --button-text: #eaeaea;
-      --shadow: rgba(0,0,0,0.5);
+    body.light {
+      --bg:      #ffffff;
+      --panel:   #f8f9fa;
+      --border:  #ddd;
+      --border2: #bbb;
+      --accent:  #222;
+      --accent2: #555;
+      --text:    #222;
+      --dim:     #666;
+      --dim2:    #aaa;
+      --red:     #cc2244;
     }
-
-    body {
-      margin: 0;
+    body.light #starCanvas { display: none; }
+    body.light .grid-bg { display: none; }
+    body.light .scanlines { display: none; }
+    body.light .bottom-line { display: none; }
+    body.light .corner { display: none; }
+    body.light .logo-ring svg { display: none; }
+    body.light .logo-text {
+      color: #222;
+      text-shadow: none;
       font-family: "Segoe UI", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: 0.3s;
-    }
-
-    .header {
-      background: var(--bg);
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       font-size: 18px;
       font-weight: 600;
+      letter-spacing: .04em;
     }
-
-    .header-controls {
-      display: flex;
-      gap: 10px;
+    body.light .header {
+      background: #ffffff;
+      border-bottom: 1px solid #ddd;
+      backdrop-filter: none;
     }
-
-    .header button,
-    .themeBtn {
-      background: var(--button-bg);
-      border: 1px solid var(--border);
-      color: var(--button-text);
-      padding: 6px 14px;
+    body.light .hbtn {
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 13px;
+      letter-spacing: 0;
+      text-transform: none;
       border-radius: 6px;
-      cursor: pointer;
-      transition: 0.25s;
+      padding: 7px 16px;
+    }
+    body.light .hbtn:hover {
+      color: #222;
+      border-color: #bbb;
+      background: #f0f0f0;
+      box-shadow: none;
+    }
+    body.light .hbtn-hide {
+      border-color: #e0b0b8;
+      color: #cc2244;
+    }
+    body.light .hbtn-hide:hover {
+      background: #fdf0f2;
+      box-shadow: none;
+    }
+    body.light .card {
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    body.light .card:hover {
+      border-color: #bbb;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      transform: translateY(-3px);
+    }
+    body.light .card::before,
+    body.light .card::after { display: none; }
+    body.light .card-title {
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #222;
+    }
+    body.light .card:hover .card-title { color: #222; }
+    body.light .card-desc {
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 12px;
+      color: #888;
+    }
+    body.light .card-id { color: #ccc; }
+    body.light .card-badge {
+      color: #555;
+      border-color: #ddd;
+      background: #f5f5f5;
+    }
+    body.light .card-arrow { color: #ccc; }
+    body.light .card:hover .card-arrow { color: #888; transform: translate(2px,-2px); }
+    body.light .notice {
+      border-left-color: #bbb;
+      background: #f8f8f8;
+      border-color: #ddd;
+    }
+    body.light .notice-tag { color: #888; }
+    body.light .notice a { color: #1a73e8; }
+    body.light .sec-tag {
+      color: #888;
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 11px;
+      letter-spacing: .06em;
+    }
+    body.light .sec-bar { background: #ddd; }
+    body.light .sec-num { color: #ccc; }
+    body.light .iframe-bar {
+      background: #f5f5f5;
+      border-bottom: 1px solid #ddd;
+    }
+    body.light .iframe-url {
+      font-family: "Segoe UI", Arial, sans-serif;
     }
 
-    .header button:hover,
-    .themeBtn:hover {
-      background: var(--border);
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
 
-    .menu {
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      padding: 20px;
-      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      transition: background .4s, color .4s;
     }
 
+    /* ── 星空 canvas ── */
+    #starCanvas {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+    }
+    body.light #starCanvas { opacity: 0.18; }
+
+    /* ── グリッド背景 ── */
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 44px 44px;
+      transition: background-image .4s;
+    }
+
+    /* ── スキャンライン ── */
+    .scanlines {
+      position: fixed; inset: 0; z-index: 2; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px,
+        transparent 1px, transparent 3px
+      );
+    }
+    body.light .scanlines { opacity: 0.3; }
+
+    /* ── 下部ライン ── */
+    .bottom-line {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 2px; z-index: 20;
+      background: linear-gradient(90deg, transparent, var(--accent2), var(--accent), var(--accent2), transparent);
+      background-size: 200% 100%;
+      animation: scanMove 3s linear infinite;
+    }
+    @keyframes scanMove { from{background-position:100% 0} to{background-position:-100% 0} }
+
+    /* ── コーナー装飾 ── */
+    .corner {
+      position: fixed; z-index: 5; width: 20px; height: 20px; pointer-events: none;
+    }
+    .corner::before, .corner::after {
+      content: ''; position: absolute;
+      background: var(--accent); transition: background .4s;
+    }
+    .corner::before { width: 2px; height: 100%; }
+    .corner::after  { width: 100%; height: 2px; }
+    .corner-tl { top: 10px; left: 10px; }
+    .corner-tr { top: 10px; right: 10px; transform: scaleX(-1); }
+    .corner-bl { bottom: 14px; left: 10px; transform: scaleY(-1); }
+    .corner-br { bottom: 14px; right: 10px; transform: scale(-1); }
+
+    /* ══════════════════════════════
+       ヘッダー
+    ══════════════════════════════ */
+    .header {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 54px; padding: 0 24px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,255,231,0.02) 100%);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+      backdrop-filter: blur(4px);
+    }
+    body.light .header {
+      background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(0,180,200,0.04) 100%);
+    }
+
+    .header-logo {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo-ring {
+      position: relative; width: 32px; height: 32px;
+    }
+    .logo-ring svg { width: 100%; height: 100%; animation: spin 8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .logo-core {
+      position: absolute; inset: 7px;
+      background: rgba(0,255,231,0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      border: 1px solid rgba(0,255,231,0.2);
+    }
+    .logo-text {
+      font-family: var(--head);
+      font-size: 18px; font-weight: 700;
+      letter-spacing: .15em;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(0,255,231,0.4);
+      transition: color .4s, text-shadow .4s;
+    }
+    body.light .logo-text { text-shadow: none; }
+
+    .header-right {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    /* ── ヘッダーボタン ── */
+    .hbtn {
+      font-family: var(--mono);
+      font-size: 12px; letter-spacing: .1em;
+      padding: 9px 22px;
+      border: 1px solid var(--border2);
+      border-radius: 5px;
+      background: rgba(0,255,231,0.05);
+      color: var(--text);
+      cursor: pointer;
+      transition: all .2s;
+      text-transform: uppercase;
+      font-weight: 500;
+      min-width: 100px;
+    }
+    .hbtn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(0,255,231,0.10);
+      box-shadow: 0 0 18px rgba(0,255,231,0.2);
+    }
+    .hbtn-hide {
+      border-color: rgba(255,68,102,0.5);
+      color: rgba(255,68,102,0.9);
+      background: rgba(255,68,102,0.05);
+    }
+    .hbtn-hide:hover {
+      color: #fff;
+      border-color: var(--red);
+      background: rgba(255,68,102,0.18);
+      box-shadow: 0 0 16px rgba(255,68,102,0.2);
+    }
+
+    /* テーマスイッチ */
+    .t-wrap { display: flex; align-items: center; gap: 7px; }
+    .t-ico { font-size: 13px; line-height: 1; }
+    .t-sw { position: relative; width: 38px; height: 20px; cursor: pointer; }
+    .t-sw input { display: none; }
+    .t-track {
+      position: absolute; inset: 0;
+      border: 1px solid var(--border2);
+      border-radius: 20px;
+      background: transparent;
+      transition: .25s;
+    }
+    .t-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--dim);
+      transition: .25s;
+    }
+    .t-sw input:checked ~ .t-track {
+      border-color: var(--accent);
+      background: rgba(0,255,231,0.08);
+    }
+    .t-sw input:checked ~ .t-thumb {
+      transform: translateX(18px);
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    /* ══════════════════════════════
+       メインスクロールエリア
+    ══════════════════════════════ */
+    .main {
+      position: relative; z-index: 10;
+      flex: 1; overflow-y: auto;
+      padding: 22px 24px 40px;
+    }
+    .main::-webkit-scrollbar { width: 3px; }
+    .main::-webkit-scrollbar-track { background: transparent; }
+    .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── お知らせ ── */
+    .notice {
+      display: flex; align-items: flex-start; gap: 12px;
+      border: 1px solid var(--border2);
+      border-left: 2px solid var(--accent);
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin-bottom: 26px;
+      font-size: 11px; color: var(--dim);
+      line-height: 1.8;
+      background: var(--panel);
+      animation: fadeUp .5s ease both;
+    }
+    .notice-tag {
+      color: var(--accent); font-size: 10px; letter-spacing: .12em;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .notice a { color: var(--accent2); text-decoration: none; }
+    .notice a:hover { text-decoration: underline; }
+
+    /* ── セクションヘッド ── */
+    .sec {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+      animation: fadeUp .4s .05s ease both;
+    }
+    .sec-tag {
+      font-size: 10px; letter-spacing: .2em;
+      color: var(--accent); text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .sec-bar {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--border2), transparent);
+    }
+    .sec-num {
+      font-size: 10px; color: var(--dim2); letter-spacing: .08em;
+    }
+
+    /* ── グリッド ── */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 30px;
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      margin-top: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
     }
 
-    .item {
-      text-align: center;
-    }
-
-    .btn-site {
-      width: 100%;
-      padding: 18px 0;
-      background: var(--card);
-      border-radius: 14px;
+    /* ── カード ── */
+    .card {
+      position: relative;
       border: 1px solid var(--border);
-      box-shadow: 0 4px 12px var(--shadow);
-      font-size: 17px;
+      border-radius: 6px;
+      padding: 16px 15px 14px;
+      background: var(--panel);
       cursor: pointer;
-      transition: 0.3s;
+      text-align: left;
+      transition: border .2s, transform .2s, box-shadow .2s;
+      display: flex; flex-direction: column; gap: 6px;
+      overflow: hidden;
+      animation: fadeUp .45s ease both;
+    }
+    /* 左上コーナーライン */
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 28px; height: 2px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity .2s, width .25s;
+    }
+    .card::after {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 2px; height: 28px;
+      background: var(--accent);
+      opacity: 0;
+      transition: opacity .2s, height .25s;
+    }
+    .card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(0,255,231,0.07), inset 0 0 30px rgba(0,255,231,0.03);
+    }
+    .card:hover::before, .card:hover::after { opacity: 1; }
+
+    .card:nth-child(1){animation-delay:.06s}
+    .card:nth-child(2){animation-delay:.10s}
+    .card:nth-child(3){animation-delay:.14s}
+    .card:nth-child(4){animation-delay:.18s}
+    .card:nth-child(5){animation-delay:.22s}
+    .card:nth-child(6){animation-delay:.26s}
+    .card:nth-child(7){animation-delay:.30s}
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-id {
+      font-size: 9px; letter-spacing: .14em; color: var(--dim2);
+    }
+    .card-badge {
+      font-size: 9px; letter-spacing: .1em;
+      color: var(--accent2);
+      border: 1px solid rgba(0,168,255,0.25);
+      border-radius: 3px; padding: 1px 7px;
+      background: rgba(0,168,255,0.06);
+    }
+    .card-title {
+      font-family: var(--head);
+      font-size: 15px; font-weight: 600;
+      letter-spacing: .04em;
       color: var(--text);
+      transition: color .2s;
+      line-height: 1.3;
     }
-
-    .btn-site:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 18px var(--shadow);
+    .card:hover .card-title { color: var(--accent); }
+    .card-desc {
+      font-size: 10px; color: var(--dim);
+      line-height: 1.6; letter-spacing: .02em;
     }
-
-    .desc {
-      margin-top: 12px;
-      font-size: 14px;
-      opacity: 0.8;
+    .card-arrow {
+      align-self: flex-end;
+      font-size: 13px; color: var(--dim2);
+      transition: color .2s, transform .2s;
+      margin-top: 2px;
     }
+    .card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }
 
-    iframe {
-      width: 100%;
-      flex: 1;
-      border: none;
-      display: none;
+    /* ══════════════════════════════
+       iframeエリア
+    ══════════════════════════════ */
+    #iframeWrap {
+      display: none; flex-direction: column;
+      flex: 1; overflow: hidden;
+      position: relative; z-index: 10;
+    }
+    .iframe-bar {
+      display: flex; align-items: center; gap: 10px;
+      height: 38px; padding: 0 16px;
+      background: rgba(0,0,0,0.5);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+    }
+    body.light .iframe-bar { background: rgba(255,255,255,0.8); }
+    .iframe-url {
+      font-size: 10px; color: var(--dim);
+      flex: 1; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+      letter-spacing: .03em;
+    }
+    #iframe { width:100%; flex:1; border:none; display:block; }
+
+    /* ── アニメーション ── */
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
     }
   </style>
 </head>
-
 <body>
-  <div class="header">
-    <span>隠しページ</span>
-    <div class="header-controls">
-      <button onclick="goHome()">ホーム</button>
-      <button onclick="hidePanel()">隠す</button>
-      <button class="themeBtn" onclick="toggleTheme()">ライト</button>
+
+<!-- 星空 -->
+<canvas id="starCanvas"></canvas>
+<div class="grid-bg"></div>
+<div class="scanlines"></div>
+<div class="bottom-line"></div>
+
+<!-- コーナー装飾 -->
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-ring">
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="none" stroke="#00ffe7" stroke-width="1"
+          stroke-dasharray="6 4" opacity=".6"/>
+        <circle cx="16" cy="16" r="9" fill="none" stroke="#00a8ff" stroke-width=".7"
+          stroke-dasharray="2 5" opacity=".4"/>
+      </svg>
+      <div class="logo-core">🔓</div>
+    </div>
+    <span class="logo-text">SECRET</span>
+  </div>
+  <div class="header-right">
+    <button class="hbtn" onclick="goHome()">[ HOME ]</button>
+    <button class="hbtn hbtn-hide" onclick="hidePanel()">[ HIDE ]</button>
+    <div class="t-wrap">
+      <span class="t-ico" id="tIco">🌙</span>
+      <label class="t-sw">
+        <input type="checkbox" id="themeCheck" onchange="applyTheme()">
+        <div class="t-track"></div>
+        <div class="t-thumb"></div>
+      </label>
+      <span class="t-ico">☀︎</span>
     </div>
   </div>
+</div>
 
-  <div class="menu" id="menu">
-    <p style="text-align:center; margin-bottom: 30px;">
+<!-- メイン -->
+<div class="main" id="menu">
+
+  <div class="notice">
+    <span class="notice-tag">SYS</span>
+    <span>
       チャットサイトはサーバーの関係上起動が遅いです。
-    </p>
-
-    <p>スカイメニュークラウド解除必須 Googleコピー追加 推奨フィルター待ち　https://gakkkoubenkyoo.onapon.com</p>
-
-    <div class="grid">
-      <div class="item">
-        <button class="btn-site"
-          onclick="window.open('https://google4-zeta.vercel.app/','_blank')">
-          偽Google2（コピー）
-        </button>
-        <div class="desc">推奨フィルターは数日待ったら解除される</div>
-      </div>
-
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('ifame.html')">
-          iframeサイト（履歴なし）
-        </button>
-        <div class="desc">履歴残らない</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site"
-          onclick="openSite('gamemenu.html')">
-          ゲーム一覧
-        </button>
-        <div class="desc">ゲーム一覧</div>
-      </div>
-
-
-      <div class="item">
-        <button class="btn-site"
-          onclick="openSite('https://googlecom-seven.vercel.app/purokisi.html')">
-          プロキシ
-        </button>
-        <div class="desc">プロキシ</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site" onclick="openSite('https://x.gd/gakkou2')">
-          gakkou2
-        </button>
-        <div class="desc">???</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site"
-          onclick="openSite('https://www.freemake.com/jp/free_video_downloader/')">
-          youtubeダウンロード
-        </button>
-        <div class="desc">ダウンロードできます</div>
-      </div>
-
-      <div class="item">
-        <button class="btn-site"
-          onclick="window.open('https://x.gd/rirekiume','_blank')">
-          履歴埋め（Google風）
-        </button>
-        <div class="desc">別タブで開きます</div>
-      </div>
-    </div>
+      スカイメニュークラウド解除必須 / 推奨フィルター待ち →
+      <a href="https://gakkkoubenkyoo.onapon.com" target="_blank">gakkkoubenkyoo.onapon.com</a>
+    </span>
   </div>
 
-  <iframe id="iframe"></iframe>
+  <div class="sec">
+    <span class="sec-tag">// ACCESS_MENU</span>
+    <div class="sec-bar"></div>
+    <span class="sec-num">07 ENTRIES</span>
+  </div>
 
-  <script>
-    // ホームに戻る（iframeを閉じてメニュー表示）
-    function goHome() {
-      const iframe = document.getElementById("iframe");
-      const menu = document.getElementById("menu");
-      iframe.style.display = "none";
-      iframe.src = "";
-      menu.style.display = "flex";
-      try {
-        if (window.parent && window.parent !== window) {
-          window.parent.setOverlay(false);
-        }
-      } catch(e) {}
-    }
+  <div class="grid">
 
-    // 隠す（index.htmlのGoogle画面に戻す、リセットしない）
-    function hidePanel() {
-      try {
-        if (window.parent && window.parent !== window) {
-          const frame = window.parent.document.getElementById("hiddenFrame");
-          if (frame) {
-            frame.style.display = "none";
-            window.parent.setOverlay(false);
-            return;
-          }
-        }
-      } catch(e) {}
-    }
+    <div class="card" onclick="openNewTab('https://google4-zeta.vercel.app/')">
+      <div class="card-header">
+        <span class="card-id">NODE_01</span>
+        <span class="card-badge">NEW TAB</span>
+      </div>
+      <div class="card-title">偽Google2</div>
+      <div class="card-desc">推奨フィルターは数日で解除される</div>
+      <span class="card-arrow">↗</span>
+    </div>
 
-    function openSite(url) {
-      const iframe = document.getElementById("iframe");
-      document.getElementById("menu").style.display = "none";
-      iframe.style.display = "block";
-      iframe.src = url;
-      try {
-        if (window.parent && window.parent !== window) {
-          window.parent.setOverlay(true);
-        }
-      } catch(e) {}
-    }
+    <div class="card" onclick="openSite('ifame.html')">
+      <div class="card-header">
+        <span class="card-id">NODE_02</span>
+      </div>
+      <div class="card-title">iframeサイト</div>
+      <div class="card-desc">履歴が残らない</div>
+      <span class="card-arrow">→</span>
+    </div>
 
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-      const isDark = document.body.classList.contains("dark");
-      document.querySelector(".themeBtn").textContent =
-        isDark ? "ダーク" : "ライト";
-      localStorage.setItem("theme_peji", isDark ? "dark" : "light");
-    }
+    <div class="card" onclick="openSite('gamemenu.html')">
+      <div class="card-header">
+        <span class="card-id">NODE_03</span>
+      </div>
+      <div class="card-title">ゲーム一覧</div>
+      <div class="card-desc">ゲームの一覧</div>
+      <span class="card-arrow">→</span>
+    </div>
 
-    // Ctrl+Q を親フレームに伝える
-    document.addEventListener("keydown", function(e) {
-      if (e.ctrlKey && e.key === "q") {
-        e.preventDefault();
-        try {
-          if (window.parent && window.parent !== window) {
-            const event = new KeyboardEvent("keydown", {
-              key: "q",
-              ctrlKey: true,
-              bubbles: true
-            });
-            window.parent.document.dispatchEvent(event);
-          }
-        } catch (err) {}
-      }
+    <div class="card" onclick="openSite('https://googlecom-seven.vercel.app/purokisi.html')">
+      <div class="card-header">
+        <span class="card-id">NODE_04</span>
+      </div>
+      <div class="card-title">プロキシ</div>
+      <div class="card-desc">プロキシ経由でアクセス</div>
+      <span class="card-arrow">→</span>
+    </div>
+
+    <div class="card" onclick="openSite('https://x.gd/gakkou2')">
+      <div class="card-header">
+        <span class="card-id">NODE_05</span>
+      </div>
+      <div class="card-title">gakkou2</div>
+      <div class="card-desc">???</div>
+      <span class="card-arrow">→</span>
+    </div>
+
+    <div class="card" onclick="openSite('https://www.freemake.com/jp/free_video_downloader/')">
+      <div class="card-header">
+        <span class="card-id">NODE_06</span>
+      </div>
+      <div class="card-title">YouTubeダウンロード</div>
+      <div class="card-desc">動画をダウンロードできる</div>
+      <span class="card-arrow">→</span>
+    </div>
+
+    <div class="card" onclick="openNewTab('https://x.gd/rirekiume')">
+      <div class="card-header">
+        <span class="card-id">NODE_07</span>
+        <span class="card-badge">NEW TAB</span>
+      </div>
+      <div class="card-title">履歴埋め</div>
+      <div class="card-desc">Google風の履歴で埋める</div>
+      <span class="card-arrow">↗</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- iframeエリア -->
+<div id="iframeWrap">
+  <div class="iframe-bar">
+    <button class="hbtn" onclick="goHome()">← BACK</button>
+    <span class="iframe-url" id="iframeUrl"></span>
+  </div>
+  <iframe id="iframe" allowfullscreen></iframe>
+</div>
+
+<script>
+  /* ── 星空 ── */
+  const canvas = document.getElementById('starCanvas');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  function initStars() {
+    stars = Array.from({length: 140}, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.2 + 0.2,
+      s: Math.random() * 0.25 + 0.04,
+      a: Math.random() * 0.5 + 0.15
+    }));
+  }
+  initStars();
+  function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(180,230,255,${s.a})`;
+      ctx.fill();
+      s.y += s.s;
+      if (s.y > canvas.height + 2) { s.y = -2; s.x = Math.random() * canvas.width; }
     });
+    requestAnimationFrame(drawStars);
+  }
+  drawStars();
 
-    window.onload = () => {
-      const saved = localStorage.getItem("theme_peji");
-      if (saved === "dark") {
-        document.body.classList.add("dark");
-        document.querySelector(".themeBtn").textContent = "ダーク";
+  /* ── 機能 ── */
+  function goHome() {
+    document.getElementById('iframeWrap').style.display = 'none';
+    document.getElementById('iframe').src = '';
+    document.getElementById('menu').style.display = 'block';
+  }
+  function hidePanel() {
+    try {
+      if (window.parent !== window) {
+        const f = window.parent.document.getElementById('hiddenFrame');
+        if (f) { f.style.display = 'none'; return; }
       }
-    };
-  </script>
+    } catch(e) {}
+  }
+  function openSite(url) {
+    document.getElementById('menu').style.display = 'none';
+    const wrap = document.getElementById('iframeWrap');
+    wrap.style.display = 'flex';
+    document.getElementById('iframeUrl').textContent = url;
+    document.getElementById('iframe').src = url;
+  }
+  function openNewTab(url) { window.open(url, '_blank'); }
+
+  function applyTheme() {
+    const light = document.getElementById('themeCheck').checked;
+    document.body.classList.toggle('light', light);
+    document.getElementById('tIco').textContent = light ? '☀︎' : '🌙';
+    localStorage.setItem('theme_peji', light ? 'light' : 'dark');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'u') { e.preventDefault(); hidePanel(); }
+  });
+
+  window.onload = () => {
+    const light = localStorage.getItem('theme_peji') === 'light';
+    document.getElementById('themeCheck').checked = light;
+    if (light) { document.body.classList.add('light'); document.getElementById('tIco').textContent = '☀︎'; }
+  };
+</script>
 </body>
 </html>
