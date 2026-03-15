@@ -235,19 +235,19 @@
     <span id="chatStatusText">OPEN</span>
   </div>
   <!-- 開放ボタン -->
-  <button class="cbtn cbtn-green" id="btnOpen" onclick="setChatClosed(false)">▶ 解放</button>
+  <button class="cbtn cbtn-green" id="btnOpen" onclick="window.setChatClosed(false)">▶ 解放</button>
   <!-- 閉鎖ボタン -->
-  <button class="cbtn cbtn-amber" id="btnClose" onclick="setChatClosed(true)">⏸ 閉鎖</button>
+  <button class="cbtn cbtn-amber" id="btnClose" onclick="window.setChatClosed(true)">⏸ 閉鎖</button>
   <!-- 全削除 -->
-  <button class="cbtn cbtn-red" onclick="confirmDeleteAll()">🗑 全削除</button>
+  <button class="cbtn cbtn-red" onclick="window.confirmDeleteAll()">🗑 全削除</button>
   <!-- テロップ速度 -->
   <div class="speed-wrap">
     <span class="speed-label">TICKER</span>
-    <input type="range" id="speedSlider" min="5" max="40" value="15" oninput="onSpeedChange(this.value)">
+    <input type="range" id="speedSlider" min="5" max="40" value="15" oninput="window.onSpeedChange(this.value)">
     <span class="speed-val" id="speedVal">15s</span>
   </div>
   <!-- 更新 -->
-  <button class="cbtn" onclick="loadMsgs()">🔄 更新</button>
+  <button class="cbtn" onclick="window.loadMsgs()">🔄 更新</button>
 </div>
 
 <!-- メイン -->
@@ -290,7 +290,7 @@
   <div class="ban-list" id="banList"></div>
   <div class="add-row" style="margin-bottom:28px;">
     <input type="text" id="banInput" placeholder="BANするユーザー名を入力..." maxlength="20">
-    <button class="cbtn cbtn-red" onclick="addBan()">+ BAN</button>
+    <button class="cbtn cbtn-red" onclick="window.addBan()">+ BAN</button>
   </div>
 
   <!-- NGワード -->
@@ -302,7 +302,7 @@
   <div class="ng-list" id="ngList"></div>
   <div class="add-row">
     <input type="text" id="ngInput" placeholder="NGワードを追加..." maxlength="30">
-    <button class="cbtn cbtn-red" onclick="addNgWord()">+ 追加</button>
+    <button class="cbtn cbtn-red" onclick="window.addNgWord()">+ 追加</button>
   </div>
 
   <!-- コマンド管理 -->
@@ -344,8 +344,8 @@
       <input type="text" id="cmdMsg" placeholder="例: こんにちは！" maxlength="100">
     </div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <button class="cbtn cbtn-green" onclick="addCmd()">+ 追加</button>
-      <button class="cbtn" onclick="cancelEditCmd()" id="cmdCancelBtn" style="display:none;">キャンセル</button>
+      <button class="cbtn cbtn-green" onclick="window.addCmd()">+ 追加</button>
+      <button class="cbtn" onclick="window.cancelEditCmd()" id="cmdCancelBtn" style="display:none;">キャンセル</button>
     </div>
   </div>
 
@@ -358,7 +358,7 @@
     <h3 id="confirmTitle">⚠ 確認</h3>
     <p id="confirmText">この操作は取り消せません。</p>
     <div class="confirm-btns">
-      <button class="btn-cc" onclick="closeConfirm()">キャンセル</button>
+      <button class="btn-cc" onclick="window.closeConfirm()">キャンセル</button>
       <button class="btn-co" id="confirmOkBtn">実行する</button>
     </div>
   </div>
