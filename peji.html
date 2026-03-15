@@ -245,15 +245,16 @@
     .ticker-text {
       font-family: var(--mono); font-size: 11px;
       color: var(--accent); white-space: nowrap;
-      position: absolute; right: -100%;
+      position: absolute;
+      transform: translateX(100vw);
       animation: none;
     }
     .ticker-text.running {
       animation: tickerScroll var(--dur, 20s) linear forwards;
     }
     @keyframes tickerScroll {
-      0%   { right: -100%; }
-      100% { right: 110%; }
+      0%   { transform: translateX(100vw); }
+      100% { transform: translateX(-200%); }
     }
     /* チャットボタン */
     #chatOpenBtn {
@@ -922,7 +923,7 @@
 <script type="module">
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import { getFirestore, collection, addDoc, query, orderBy,
-           limit, onSnapshot, serverTimestamp }
+           limit, onSnapshot, serverTimestamp, doc, getDoc }
     from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -985,25 +986,56 @@
   let   tickerQueue  = [];
   let   tickerRunning = false;
 
-  function runTicker() {
-    if (tickerQueue.length === 0) { tickerRunning = false; return; }
-    tickerRunning = true;
-    const text = tickerQueue.shift();
-    // 新しいspanを作って右端から流す
+  // テロップ速度（chatkanriから取得、デフォルト15秒）
+  let tickerSpeed = 15;
+
+  // 複数同時流し：各メッセージを独立したspanで流す
+  function launchTicker(text) {
     const span = document.createElement('span');
     span.className = 'ticker-text';
     span.textContent = text;
     tickerInner.appendChild(span);
-    // テキスト長に応じてspeed調整（長いほどゆっくり）
-    const dur = Math.max(12, Math.min(28, text.length * 0.35));
-    span.style.setProperty('--dur', dur + 's');
+    span.style.setProperty('--dur', tickerSpeed + 's');
     span.offsetHeight;
     span.classList.add('running');
-    span.addEventListener('animationend', () => {
-      span.remove();
-      runTicker(); // 次のメッセージへ
-    });
+    span.addEventListener('animationend', () => span.remove());
   }
+
+  function runTicker() {
+    if (tickerQueue.length === 0) { tickerRunning = false; return; }
+    tickerRunning = true;
+    // キュー内の全メッセージを少しずつずらして同時に流す
+    tickerQueue.forEach((text, i) => {
+      setTimeout(() => launchTicker(text), i * 800);
+    });
+    tickerQueue = [];
+    tickerRunning = false;
+  }
+
+  // チャット設定監視（閉鎖・BAN）
+  onSnapshot(doc(db, "config", "chatSettings"), snap => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (data.tickerSpeed) tickerSpeed = data.tickerSpeed;
+    // チャット閉鎖チェック
+    const inputEl = document.getElementById('chatInput');
+    const sendEl  = document.getElementById('chatSend');
+    const nameEl2 = document.getElementById('chatName');
+    if (data.closed) {
+      inputEl.disabled = true; sendEl.disabled = true; nameEl2.disabled = true;
+      inputEl.placeholder = '【チャット閉鎖中】';
+    } else {
+      inputEl.disabled = false; sendEl.disabled = false; nameEl2.disabled = false;
+      inputEl.placeholder = 'メッセージ...';
+    }
+    // BANチェック
+    const myN = getMyName();
+    const banned = data.banned || [];
+    if (banned.includes(myN)) {
+      inputEl.disabled = true; sendEl.disabled = true;
+      inputEl.placeholder = '【BANされています】';
+    }
+  });
 
   const q = query(collection(db, "chat"), orderBy("ts", "desc"), limit(50));
   onSnapshot(q, snap => {
