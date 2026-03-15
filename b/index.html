@@ -378,7 +378,8 @@
   // peji.html を iframe で表示 / 非表示
   // ----------------------------------------
   function openPeji() {
-    hiddenFrame.src          = "peji.html";
+    // 別タブで直接URLに飛ぶ
+    hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
     hiddenFrame.style.display = "block";
   }
   function closePeji() {
