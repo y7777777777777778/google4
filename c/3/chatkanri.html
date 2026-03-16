@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>クラス3 チャット管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #020408;
+    --panel:   rgba(0,255,231,0.03);
+    --border:  rgba(0,255,231,0.10);
+    --border2: rgba(0,255,231,0.25);
+    --accent:  #00ffe7;
+    --accent2: #00a8ff;
+    --text:    #c8f0ec;
+    --dim:     #3a6660;
+    --dim2:    #1e3835;
+    --red:     #ff4466;
+    --red-dim: rgba(255,68,102,0.10);
+    --green:   #3dd68c;
+    --amber:   #ffb300;
+    --mono:    'Share Tech Mono', monospace;
+    --head:    'Rajdhani', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--mono);
+    background: var(--bg); color: var(--text);
+    height: 100vh; display: flex; flex-direction: column;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 60%{opacity:.3} }
+  @keyframes popIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* ── ヘッダー ── */
+  .header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px;
+    min-height: 54px; padding: 0 24px;
+    background: rgba(0,0,0,0.85);
+    border-bottom: 1px solid var(--border2); flex-shrink: 0;
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--head); font-size: 18px; font-weight: 700;
+    letter-spacing: .15em; color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,255,231,0.4); padding: 10px 0;
+  }
+  .logo-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+  .class-badge {
+    font-size: 10px; letter-spacing: .12em; color: var(--accent2);
+    border: 1px solid rgba(0,168,255,.3); background: rgba(0,168,255,.06);
+    border-radius: 4px; padding: 3px 10px;
+  }
+  .header-stats { display: flex; gap: 20px; align-items: center; padding: 10px 0; }
+  .stat { text-align: center; }
+  .stat-num { font-size: 20px; font-weight: 700; color: var(--accent); text-shadow: 0 0 10px rgba(0,255,231,0.3); }
+  .stat-label { font-size: 9px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
+
+  /* ── コントロールパネル ── */
+  .ctrl-panel {
+    position: relative; z-index: 1;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    padding: 14px 24px;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid var(--border2);
+  }
+  .status-badge {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 14px; border-radius: 4px;
+    font-size: 10px; letter-spacing: .1em; border: 1px solid; font-weight: 600;
+  }
+  .status-badge.open  { border-color: rgba(61,214,140,.4); color: var(--green); background: rgba(61,214,140,.06); }
+  .status-badge.closed { border-color: rgba(255,179,0,.4); color: var(--amber); background: rgba(255,179,0,.06); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .status-badge.open .status-dot { animation: blink 1.5s ease-in-out infinite; }
+  .cbtn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+    padding: 7px 16px; border: 1px solid var(--border2); border-radius: 4px;
+    background: var(--panel); color: var(--text);
+    cursor: pointer; transition: all .15s; text-transform: uppercase; white-space: nowrap;
+  }
+  .cbtn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,255,231,0.06); }
+  .cbtn-green { border-color: rgba(61,214,140,.4); color: var(--green); background: rgba(61,214,140,.06); }
+  .cbtn-green:hover { border-color: var(--green); background: rgba(61,214,140,.14); }
+  .cbtn-amber { border-color: rgba(255,179,0,.4); color: var(--amber); background: rgba(255,179,0,.06); }
+  .cbtn-amber:hover { border-color: var(--amber); background: rgba(255,179,0,.14); }
+  .cbtn-red { border-color: rgba(255,68,102,.4); color: var(--red); background: var(--red-dim); }
+  .cbtn-red:hover { border-color: var(--red); background: rgba(255,68,102,.18); }
+
+  /* ── メイン（メッセージ一覧） ── */
+  .main { position: relative; z-index: 1; padding: 20px 24px; overflow-y: auto; flex: none; max-height: 45vh; }
+  .main::-webkit-scrollbar { width: 3px; }
+  .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 180px; }
+  .search-wrap input {
+    width: 100%; background: var(--panel); border: 1px solid var(--border2);
+    border-radius: 4px; color: var(--text); font-family: var(--mono);
+    font-size: 11px; padding: 7px 10px 7px 28px; outline: none; transition: border .15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--dim2); }
+  .search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--dim); pointer-events: none; }
+  .sec { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .sec-tag { font-size: 10px; letter-spacing: .18em; color: var(--accent); text-transform: uppercase; }
+  .sec-bar { flex: 1; height: 1px; background: linear-gradient(90deg, var(--border2), transparent); }
+  .sec-num { font-size: 10px; color: var(--dim2); }
+  .table-wrap { background: var(--panel); border: 1px solid var(--border2); border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead tr { background: rgba(0,255,231,0.04); border-bottom: 1px solid var(--border2); }
+  thead th { padding: 10px 14px; text-align: left; font-size: 9px; letter-spacing: .14em; color: var(--dim); text-transform: uppercase; font-weight: 400; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(0,255,231,0.03); }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  .td-name { color: var(--accent2); letter-spacing: .04em; }
+  .td-text { color: var(--text); word-break: break-all; max-width: 260px; }
+  .td-time { color: var(--dim); white-space: nowrap; font-size: 10px; }
+  .td-actions { display: flex; gap: 6px; }
+  .del-btn { font-family: var(--mono); font-size: 9px; padding: 4px 9px; border-radius: 4px; border: 1px solid rgba(255,68,102,.3); background: var(--red-dim); color: rgba(255,68,102,.8); cursor: pointer; transition: all .15s; }
+  .del-btn:hover { border-color: var(--red); color: var(--red); background: rgba(255,68,102,.2); }
+  .ban-btn { font-family: var(--mono); font-size: 9px; padding: 4px 9px; border-radius: 4px; border: 1px solid rgba(255,179,0,.3); background: rgba(255,179,0,.06); color: var(--amber); cursor: pointer; transition: all .15s; }
+  .ban-btn:hover { border-color: var(--amber); background: rgba(255,179,0,.16); }
+  .banned-tag { font-size: 9px; color: var(--red); border: 1px solid rgba(255,68,102,.3); border-radius: 3px; padding: 2px 6px; }
+  .loading { text-align: center; padding: 32px; color: var(--dim); font-size: 11px; letter-spacing: .1em; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px; }
+
+  /* ── BANリスト / NGワード ── */
+  .sub-section { padding: 0 24px 20px; position: relative; z-index: 1; }
+  .ban-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; min-height: 28px; }
+  .ban-tag { display: flex; align-items: center; gap: 6px; background: rgba(255,68,102,.08); border: 1px solid rgba(255,68,102,.3); border-radius: 4px; padding: 4px 10px; font-size: 10px; color: rgba(255,68,102,.9); }
+  .ban-tag button { background: none; border: none; cursor: pointer; color: rgba(255,68,102,.5); font-size: 12px; line-height: 1; padding: 0; transition: color .12s; }
+  .ban-tag button:hover { color: var(--red); }
+  .ng-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 28px; }
+  .ng-tag { display: flex; align-items: center; gap: 6px; background: var(--red-dim); border: 1px solid rgba(255,68,102,.3); border-radius: 4px; padding: 4px 10px; font-size: 10px; color: rgba(255,68,102,.9); }
+  .ng-tag button { background: none; border: none; cursor: pointer; color: rgba(255,68,102,.5); font-size: 12px; line-height: 1; padding: 0; }
+  .ng-tag button:hover { color: var(--red); }
+  .add-row { display: flex; gap: 8px; }
+  .add-row input { flex: 1; background: var(--panel); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: var(--mono); font-size: 11px; padding: 7px 10px; outline: none; transition: border .15s; }
+  .add-row input:focus { border-color: var(--red); }
+  .add-row input::placeholder { color: var(--dim2); }
+
+  /* ── チャット入力エリア ── */
+  .chat-input-area {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px 12px;
+    background: rgba(0,0,0,0.6);
+    border-top: 1px solid var(--border2);
+    flex-shrink: 0; margin-top: auto;
+  }
+  .name-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .name-label { font-size: 9px; color: var(--accent); letter-spacing: .08em; }
+  #nameInput {
+    width: 90px; background: rgba(0,255,231,0.04);
+    border: 1px solid var(--border2); border-radius: 4px;
+    color: var(--accent); font-family: var(--mono);
+    font-size: 11px; padding: 6px 8px; outline: none; transition: border .15s;
+  }
+  #nameInput:focus { border-color: var(--accent); }
+  #msgInput {
+    flex: 1; background: rgba(0,255,231,0.04);
+    border: 1px solid var(--border2); border-radius: 4px;
+    color: var(--text); font-family: var(--mono);
+    font-size: 12px; padding: 8px 12px; outline: none; transition: border .15s;
+  }
+  #msgInput:focus { border-color: var(--accent); }
+  #msgInput::placeholder { color: var(--dim2); }
+  #sendBtn {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+    padding: 8px 18px; border: 1px solid var(--border2); border-radius: 4px;
+    background: rgba(0,255,231,0.06); color: var(--accent);
+    cursor: pointer; transition: all .15s; text-transform: uppercase; flex-shrink: 0;
+  }
+  #sendBtn:hover { background: rgba(0,255,231,0.14); border-color: var(--accent); box-shadow: 0 0 12px rgba(0,255,231,0.15); }
+
+  /* ── トースト ── */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: rgba(10,20,30,0.95); border: 1px solid var(--border2); color: var(--text); padding: 10px 20px; border-radius: 6px; font-size: 11px; opacity: 0; transition: .25s; z-index: 200; pointer-events: none; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── 確認ダイアログ ── */
+  #confirmOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; justify-content: center; align-items: center; }
+  #confirmOverlay.active { display: flex; }
+  #confirmBox { background: #0a0e1a; border: 1px solid var(--border2); border-radius: 10px; padding: 28px 24px; width: 320px; text-align: center; animation: popIn .18s ease; }
+  #confirmBox h3 { color: var(--red); font-family: var(--head); font-size: 16px; margin-bottom: 10px; }
+  #confirmBox p { font-size: 11px; color: var(--dim); line-height: 1.7; margin-bottom: 20px; }
+  .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+  .confirm-btns button { font-family: var(--mono); font-size: 11px; padding: 8px 20px; border-radius: 4px; cursor: pointer; transition: all .15s; text-transform: uppercase; letter-spacing: .06em; }
+  .btn-cc { background: var(--panel); border: 1px solid var(--border2); color: var(--dim); }
+  .btn-cc:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-co { background: var(--red-dim); border: 1px solid rgba(255,68,102,.4); color: var(--red); }
+  .btn-co:hover { background: rgba(255,68,102,.25); border-color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-dot"></div>
+    CHAT KANRI
+    <span class="class-badge">CLASS 3</span>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-num" id="statTotal">-</div><div class="stat-label">Total</div></div>
+    <div class="stat"><div class="stat-num" id="statUsers">-</div><div class="stat-label">Users</div></div>
+    <div class="stat"><div class="stat-num" id="statBanned">-</div><div class="stat-label">BAN</div></div>
+  </div>
+</div>
+
+<!-- コントロールパネル -->
+<div class="ctrl-panel">
+  <div class="status-badge open" id="chatStatusBadge">
+    <div class="status-dot"></div>
+    <span id="chatStatusText">OPEN</span>
+  </div>
+  <button class="cbtn cbtn-green" onclick="window.setChatClosed(false)">▶ 解放</button>
+  <button class="cbtn cbtn-amber" onclick="window.setChatClosed(true)">⏸ 閉鎖</button>
+  <button class="cbtn cbtn-red"   onclick="window.confirmDeleteAll()">🗑 全削除</button>
+  <button class="cbtn"            onclick="window.loadMsgs()">🔄 更新</button>
+</div>
+
+<!-- メッセージ一覧 -->
+<div class="main">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="名前 / 内容で検索...">
+    </div>
+  </div>
+  <div class="sec">
+    <span class="sec-tag">// MESSAGES</span>
+    <div class="sec-bar"></div>
+    <span class="sec-num" id="msgCount">-</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:13%">NAME</th>
+          <th style="width:47%">MESSAGE</th>
+          <th style="width:16%">TIME</th>
+          <th style="width:24%">操作</th>
+        </tr>
+      </thead>
+      <tbody id="msgTableBody">
+        <tr><td colspan="4" class="loading"><div class="spinner"></div><br>読み込み中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- BANリスト -->
+<div class="sub-section">
+  <div class="sec">
+    <span class="sec-tag">// BAN LIST</span>
+    <div class="sec-bar"></div>
+    <span class="sec-num" id="banCount">0 users</span>
+  </div>
+  <div class="ban-list" id="banList"></div>
+  <div class="add-row" style="margin-bottom:20px;">
+    <input type="text" id="banInput" placeholder="BANするユーザー名..." maxlength="20">
+    <button class="cbtn cbtn-red" onclick="window.addBan()">+ BAN</button>
+  </div>
+
+  <!-- NGワード -->
+  <div class="sec">
+    <span class="sec-tag">// NG WORDS</span>
+    <div class="sec-bar"></div>
+    <span class="sec-num" id="ngCount">0 words</span>
+  </div>
+  <div class="ng-list" id="ngList"></div>
+  <div class="add-row">
+    <input type="text" id="ngInput" placeholder="NGワードを追加..." maxlength="30">
+    <button class="cbtn cbtn-red" onclick="window.addNgWord()">+ 追加</button>
+  </div>
+</div>
+
+<!-- チャット入力 -->
+<div class="chat-input-area">
+  <div class="name-wrap">
+    <span class="name-label">NAME:</span>
+    <input type="text" id="nameInput" value="管理者" maxlength="20">
+  </div>
+  <input type="text" id="msgInput" placeholder="メッセージを送信..." maxlength="200">
+  <button id="sendBtn">SEND</button>
+</div>
+
+<div id="toast"></div>
+<div id="confirmOverlay">
+  <div id="confirmBox">
+    <h3 id="confirmTitle">⚠ 確認</h3>
+    <p id="confirmText">この操作は取り消せません。</p>
+    <div class="confirm-btns">
+      <button class="btn-cc" onclick="window.closeConfirm()">キャンセル</button>
+      <button class="btn-co" id="confirmOkBtn">実行する</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc,
+           query, orderBy, onSnapshot, setDoc, getDoc, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAdQbSXJbRkd0C29O0hW5FgHERR_Vh9FZw",
+    authDomain:        "fir-d5882.firebaseapp.com",
+    projectId:         "fir-d5882",
+    storageBucket:     "fir-d5882.firebasestorage.app",
+    messagingSenderId: "68351757634",
+    appId:             "1:68351757634:web:0e33ac84b7f1671939ccdb"
+  };
+
+  const app     = initializeApp(firebaseConfig, "c3chatkanri");
+  const db      = getFirestore(app);
+  const CLASS   = "3";
+  const chatCol = collection(db, "classes", CLASS, "chat");
+  const settDoc = doc(db, "classes", CLASS, "settings", "chat");
+  const ngDoc   = doc(db, "classes", CLASS, "settings", "ngWords");
+  const banDoc  = doc(db, "classes", CLASS, "settings", "banList");
+
+  const toast   = document.getElementById('toast');
+  let allMsgs   = [];
+  let banned    = [];
+  let ngWords   = [];
+  let chatSettings = { closed: false };
+
+  function showToast(msg, dur = 3000) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), dur);
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtTime(ts) {
+    if (!ts) return '-';
+    return new Date(ts.seconds * 1000).toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  }
+
+  // ── チャット設定監視 ──
+  onSnapshot(settDoc, snap => {
+    chatSettings = snap.exists() ? snap.data() : { closed: false };
+    banned = chatSettings.banned || [];
+    const closed = chatSettings.closed || false;
+    const badge  = document.getElementById('chatStatusBadge');
+    const text   = document.getElementById('chatStatusText');
+    badge.className = 'status-badge ' + (closed ? 'closed' : 'open');
+    text.textContent = closed ? 'CLOSED' : 'OPEN';
+    document.getElementById('statBanned').textContent = banned.length;
+    renderBanList();
+  });
+
+  // ── 閉鎖 / 解放 ──
+  window.setChatClosed = async function(closed) {
+    try {
+      await setDoc(settDoc, { ...chatSettings, closed }, { merge: true });
+      showToast(closed ? '⏸ 閉鎖しました' : '▶ 解放しました');
+    } catch(e) { showToast('エラー: ' + e.message); }
+  };
+
+  // ── メッセージ一覧 ──
+  function renderTable(msgs) {
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    const filtered = q ? msgs.filter(m => m.name.toLowerCase().includes(q) || m.text.toLowerCase().includes(q)) : msgs;
+    document.getElementById('msgCount').textContent = filtered.length + ' msgs';
+    document.getElementById('statTotal').textContent = msgs.length;
+    document.getElementById('statUsers').textContent = new Set(msgs.map(m => m.name)).size;
+
+    if (filtered.length === 0) {
+      document.getElementById('msgTableBody').innerHTML = '<tr><td colspan="4" class="loading">メッセージなし</td></tr>';
+      return;
+    }
+    document.getElementById('msgTableBody').innerHTML = filtered.map(m => {
+      const isBanned = banned.includes(m.name);
+      return '<tr>' +
+        '<td class="td-name">' + esc(m.name) + (isBanned ? ' <span class="banned-tag">BAN</span>' : '') + '</td>' +
+        '<td class="td-text">' + esc(m.text) + '</td>' +
+        '<td class="td-time">' + fmtTime(m.ts) + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="del-btn" onclick="window.delMsg(\'' + m.id + '\')">🗑</button>' +
+          (isBanned
+            ? '<button class="ban-btn" onclick="window.unbanUser(\'' + esc(m.name) + '\')">解除</button>'
+            : '<button class="ban-btn" onclick="window.banUser(\'' + esc(m.name) + '\')">BAN</button>') +
+        '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  window.loadMsgs = function() {
+    const q = query(chatCol, orderBy("ts", "desc"));
+    onSnapshot(q, snap => {
+      allMsgs = snap.docs.map(d => ({ id: d.id, ...d.data() })).reverse();
+      renderTable(allMsgs);
+    });
+  };
+
+  document.getElementById('searchInput').addEventListener('input', () => renderTable(allMsgs));
+
+  window.delMsg = async function(id) {
+    try { await deleteDoc(doc(db, "classes", CLASS, "chat", id)); showToast('✅ 削除しました'); }
+    catch(e) { showToast('エラー: ' + e.message); }
+  };
+
+  window.confirmDeleteAll = function() {
+    document.getElementById('confirmTitle').textContent = '⚠ 全メッセージ削除';
+    document.getElementById('confirmText').innerHTML = 'クラス3のすべてのチャットメッセージを削除します。<br>この操作は取り消せません。';
+    document.getElementById('confirmOkBtn').onclick = async () => {
+      window.closeConfirm();
+      try {
+        const snap = await getDocs(chatCol);
+        await Promise.all(snap.docs.map(d => deleteDoc(doc(db, "classes", CLASS, "chat", d.id))));
+        showToast('🗑 全メッセージ削除しました');
+      } catch(e) { showToast('エラー: ' + e.message); }
+    };
+    document.getElementById('confirmOverlay').classList.add('active');
+  };
+  window.closeConfirm = function() { document.getElementById('confirmOverlay').classList.remove('active'); };
+
+  // ── BAN ──
+  async function saveBanned() {
+    try { await setDoc(settDoc, { ...chatSettings, banned }, { merge: true }); }
+    catch(e) { showToast('BAN保存エラー: ' + e.message); }
+  }
+  function renderBanList() {
+    const el = document.getElementById('banList');
+    document.getElementById('banCount').textContent = banned.length + ' users';
+    document.getElementById('statBanned').textContent = banned.length;
+    if (banned.length === 0) { el.innerHTML = '<span style="font-size:10px;color:var(--dim);">BANユーザーなし</span>'; return; }
+    el.innerHTML = banned.map((n, i) =>
+      '<div class="ban-tag">' + esc(n) + '<button onclick="window.unbanByIndex(' + i + ')">✕</button></div>'
+    ).join('');
+  }
+  window.banUser = async function(name) {
+    if (banned.includes(name)) { showToast('既にBANされています'); return; }
+    banned.push(name); await saveBanned(); showToast('🚫 ' + name + ' をBANしました');
+  };
+  window.unbanUser = async function(name) {
+    banned = banned.filter(b => b !== name); await saveBanned(); showToast('✅ ' + name + ' のBAN解除');
+  };
+  window.unbanByIndex = async function(i) {
+    const name = banned[i]; banned.splice(i, 1); await saveBanned(); showToast('✅ ' + name + ' のBAN解除');
+  };
+  window.addBan = async function() {
+    const input = document.getElementById('banInput');
+    const name  = input.value.trim(); if (!name) return;
+    input.value = ''; await window.banUser(name);
+  };
+  document.getElementById('banInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.addBan(); });
+
+  // ── NGワード ──
+  async function loadNgWords() {
+    try { const snap = await getDoc(ngDoc); ngWords = snap.exists() ? (snap.data().words || []) : []; }
+    catch(e) { ngWords = []; }
+    renderNgList();
+  }
+  async function saveNgWords() {
+    try { await setDoc(ngDoc, { words: ngWords }); }
+    catch(e) { showToast('NGワード保存エラー: ' + e.message); }
+  }
+  function renderNgList() {
+    const el = document.getElementById('ngList');
+    document.getElementById('ngCount').textContent = ngWords.length + ' words';
+    if (ngWords.length === 0) { el.innerHTML = '<span style="font-size:10px;color:var(--dim);">NGワードなし</span>'; return; }
+    el.innerHTML = ngWords.map((w, i) =>
+      '<div class="ng-tag">' + esc(w) + '<button onclick="window.removeNg(' + i + ')">✕</button></div>'
+    ).join('');
+  }
+  window.addNgWord = async function() {
+    const input = document.getElementById('ngInput');
+    const word  = input.value.trim(); if (!word) return;
+    if (ngWords.includes(word)) { showToast('既に登録されています'); return; }
+    ngWords.push(word); input.value = '';
+    await saveNgWords(); renderNgList(); showToast('✅ NGワード追加: ' + word);
+  };
+  window.removeNg = async function(i) {
+    ngWords.splice(i, 1); await saveNgWords(); renderNgList(); showToast('🗑 NGワード削除');
+  };
+  document.getElementById('ngInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.addNgWord(); });
+
+  // ── チャット送信（管理者から） ──
+  async function sendMsg() {
+    const name = document.getElementById('nameInput').value.trim() || '管理者';
+    const text = document.getElementById('msgInput').value.trim();
+    if (!text) return;
+    document.getElementById('msgInput').value = '';
+    try {
+      await addDoc(chatCol, { name, text, ts: serverTimestamp() });
+    } catch(e) { showToast('送信エラー: ' + e.message); }
+  }
+  document.getElementById('sendBtn').addEventListener('click', sendMsg);
+  document.getElementById('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
+
+  // ── 初期化 ──
+  window.loadMsgs();
+  loadNgWords();
+</script>
+</body>
+</html>
