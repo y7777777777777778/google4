@@ -364,11 +364,30 @@
     overlay.classList.remove("active");
   }
 
-  // 初回だけsrcをセット、隠しても再開できる
+  // ユーザーごとの表示先URL
+  const pageModeUrls = {
+    peji: "https://googlecom-seven.vercel.app/peji.html",
+    pej:  "https://googlecom-seven.vercel.app/b/pej.html"
+  };
+
   let pejiLoaded = false;
+  let currentUrl  = pageModeUrls.peji;
+
+  // FirestoreからユーザーのpageModeを取得してURLを決定
+  async function loadUserPageMode(name) {
+    try {
+      const q    = query(collection(db, "users"), where("name", "==", name));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const mode = snap.docs[0].data().pageMode || "peji";
+        currentUrl = pageModeUrls[mode] || pageModeUrls.peji;
+      }
+    } catch(e) {}
+  }
+
   function openPeji() {
-    if (!pejiLoaded) {
-      hiddenFrame.src = "https://googlecom-seven.vercel.app/peji.html";
+    if (!pejiLoaded || hiddenFrame.src !== currentUrl) {
+      hiddenFrame.src = currentUrl;
       pejiLoaded = true;
     }
     hiddenFrame.style.display = "block";
@@ -396,6 +415,7 @@
     // キャッシュで即判定
     const cachedStatus = localStorage.getItem("accessStatus");
     if (cachedStatus === "ok") {
+      await loadUserPageMode(savedName);
       openPeji();
       getUserStatus(savedName).then(s => {
         if (s && s !== "ok") localStorage.setItem("accessStatus", s);
@@ -408,6 +428,7 @@
       const status = await getUserStatus(savedName);
       if (status) localStorage.setItem("accessStatus", status);
       if (status === "ok") {
+        await loadUserPageMode(savedName);
         openPeji();
       } else if (!status) {
         localStorage.removeItem("accessUserName");
