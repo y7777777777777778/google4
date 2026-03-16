@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>申請管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #020408;
+    --panel:   rgba(0,255,231,0.03);
+    --border:  rgba(0,255,231,0.10);
+    --border2: rgba(0,255,231,0.25);
+    --accent:  #00ffe7;
+    --text:    #c8f0ec;
+    --dim:     #3a6660;
+    --dim2:    #1e3835;
+    --green:   #3dd68c;
+    --red:     #ff4466;
+    --mono:    'Share Tech Mono', monospace;
+    --head:    'Rajdhani', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--mono);
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 54px; padding: 0 24px;
+    background: rgba(0,0,0,0.85);
+    border-bottom: 1px solid var(--border2);
+    flex-shrink: 0;
+  }
+  .header-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--head); font-size: 18px; font-weight: 700;
+    letter-spacing: .15em; color: var(--accent);
+    text-shadow: 0 0 20px rgba(0,255,231,0.4);
+  }
+  .logo-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 60%{opacity:.3} }
+
+  .wait-count {
+    font-size: 13px; color: var(--dim);
+    letter-spacing: .08em;
+  }
+  .wait-count span {
+    color: var(--accent); font-size: 18px; font-weight: 700;
+    margin-left: 6px;
+  }
+
+  /* ── メイン ── */
+  .main {
+    position: relative; z-index: 1;
+    flex: 1; padding: 24px;
+    overflow-y: auto;
+  }
+  .main::-webkit-scrollbar { width: 3px; }
+  .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── 空状態 ── */
+  .empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 80px 20px; color: var(--dim);
+    text-align: center; gap: 12px;
+  }
+  .empty-icon { font-size: 40px; opacity: .4; }
+  .empty-text { font-size: 12px; letter-spacing: .1em; }
+
+  /* ── カードグリッド ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── ユーザーカード ── */
+  .user-card {
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 18px 18px 14px;
+    display: flex; flex-direction: column; gap: 14px;
+    animation: fadeUp .3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+
+  .card-top {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(0,255,231,0.1);
+    border: 1px solid rgba(0,255,231,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--head); font-size: 16px; font-weight: 700;
+    color: var(--accent); flex-shrink: 0;
+    text-shadow: 0 0 10px rgba(0,255,231,0.3);
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name {
+    font-family: var(--head); font-size: 15px; font-weight: 600;
+    color: var(--text); letter-spacing: .04em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-time {
+    font-size: 10px; color: var(--dim);
+    letter-spacing: .06em; margin-top: 3px;
+  }
+  .wait-badge {
+    font-size: 9px; letter-spacing: .1em;
+    color: #ffb300; border: 1px solid rgba(255,179,0,.35);
+    background: rgba(255,179,0,.08);
+    border-radius: 4px; padding: 3px 8px;
+    white-space: nowrap; flex-shrink: 0;
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  /* ── ボタン行 ── */
+  .card-btns {
+    display: flex; gap: 10px;
+  }
+  .btn-ok {
+    flex: 1; padding: 10px;
+    border: 1px solid rgba(61,214,140,.4);
+    border-radius: 7px;
+    background: rgba(61,214,140,.07);
+    color: var(--green); font-family: var(--mono);
+    font-size: 11px; letter-spacing: .1em;
+    cursor: pointer; transition: all .15s;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .btn-ok:hover {
+    background: rgba(61,214,140,.18);
+    border-color: var(--green);
+    box-shadow: 0 0 14px rgba(61,214,140,.2);
+  }
+  .btn-ng {
+    flex: 1; padding: 10px;
+    border: 1px solid rgba(255,68,102,.4);
+    border-radius: 7px;
+    background: rgba(255,68,102,.07);
+    color: var(--red); font-family: var(--mono);
+    font-size: 11px; letter-spacing: .1em;
+    cursor: pointer; transition: all .15s;
+    text-transform: uppercase; font-weight: 600;
+  }
+  .btn-ng:hover {
+    background: rgba(255,68,102,.18);
+    border-color: var(--red);
+    box-shadow: 0 0 14px rgba(255,68,102,.2);
+  }
+  .btn-ok:disabled, .btn-ng:disabled {
+    opacity: .3; cursor: not-allowed; box-shadow: none;
+  }
+
+  /* ── トースト ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: rgba(10,20,30,0.95);
+    border: 1px solid var(--border2);
+    color: var(--text); padding: 10px 20px;
+    border-radius: 6px; font-size: 11px;
+    opacity: 0; transition: .25s; z-index: 200;
+    pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── ローディング ── */
+  .loading {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px; gap: 12px; color: var(--dim);
+  }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 11px; letter-spacing: .12em; }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-dot"></div>
+    WAIT LIST
+  </div>
+  <div class="wait-count">
+    待機中<span id="waitCount">-</span>人
+  </div>
+</div>
+
+<!-- メイン -->
+<div class="main" id="mainArea">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">読み込み中...</div>
+  </div>
+</div>
+
+<!-- トースト -->
+<div id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getFirestore, collection, query, where,
+           onSnapshot, doc, updateDoc }
+    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAdQbSXJbRkd0C29O0hW5FgHERR_Vh9FZw",
+    authDomain:        "fir-d5882.firebaseapp.com",
+    projectId:         "fir-d5882",
+    storageBucket:     "fir-d5882.firebasestorage.app",
+    messagingSenderId: "68351757634",
+    appId:             "1:68351757634:web:0e33ac84b7f1671939ccdb"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  const mainArea  = document.getElementById('mainArea');
+  const waitCount = document.getElementById('waitCount');
+  const toast     = document.getElementById('toast');
+
+  // ── トースト ──
+  function showToast(msg, dur = 3000) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), dur);
+  }
+
+  // ── 名前の頭文字 ──
+  function getInitial(name) {
+    return name ? name.charAt(0).toUpperCase() : '?';
+  }
+
+  // ── 時刻フォーマット ──
+  function fmtTime(ts) {
+    if (!ts) return '不明';
+    return new Date(ts.seconds * 1000)
+      .toLocaleString('ja-JP', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ── カード描画 ──
+  function renderCards(users) {
+    waitCount.textContent = users.length;
+
+    if (users.length === 0) {
+      mainArea.innerHTML =
+        '<div class="empty">' +
+        '<div class="empty-icon">✅</div>' +
+        '<div class="empty-text">待機中のユーザーはいません</div>' +
+        '</div>';
+      return;
+    }
+
+    mainArea.innerHTML = '<div class="grid" id="cardGrid"></div>';
+    const grid = document.getElementById('cardGrid');
+
+    users.forEach((user, i) => {
+      const card = document.createElement('div');
+      card.className = 'user-card';
+      card.style.animationDelay = (i * 0.05) + 's';
+      card.dataset.id = user.id;
+      card.innerHTML =
+        '<div class="card-top">' +
+          '<div class="avatar">' + getInitial(user.name) + '</div>' +
+          '<div class="card-info">' +
+            '<div class="card-name">' + escHtml(user.name) + '</div>' +
+            '<div class="card-time">申請: ' + fmtTime(user.createdAt) + '</div>' +
+          '</div>' +
+          '<div class="wait-badge">WAIT</div>' +
+        '</div>' +
+        '<div class="card-btns">' +
+          '<button class="btn-ok" data-id="' + user.id + '" data-name="' + escHtml(user.name) + '">✓ 許可</button>' +
+          '<button class="btn-ng" data-id="' + user.id + '" data-name="' + escHtml(user.name) + '">✕ 拒否</button>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+
+    // ── イベント委任でボタン処理 ──
+    grid.addEventListener('click', async function(e) {
+      const okBtn = e.target.closest('.btn-ok');
+      const ngBtn = e.target.closest('.btn-ng');
+      if (!okBtn && !ngBtn) return;
+
+      const btn    = okBtn || ngBtn;
+      const id     = btn.dataset.id;
+      const name   = btn.dataset.name;
+      const status = okBtn ? 'ok' : 'ng';
+
+      // ボタン無効化
+      const card = btn.closest('.user-card');
+      card.querySelectorAll('button').forEach(b => b.disabled = true);
+
+      try {
+        await updateDoc(doc(db, 'users', id), { status });
+        // カードをフェードアウト
+        card.style.transition = 'opacity .3s, transform .3s';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.95)';
+        setTimeout(() => card.remove(), 300);
+        showToast(status === 'ok'
+          ? '✅ 「' + name + '」を許可しました'
+          : '🚫 「' + name + '」を拒否しました'
+        );
+      } catch(e) {
+        console.error(e);
+        showToast('エラー: ' + e.message);
+        card.querySelectorAll('button').forEach(b => b.disabled = false);
+      }
+    });
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── リアルタイム監視（waitのみ） ──
+  const q = query(collection(db, 'users'), where('status', '==', 'wait'));
+  onSnapshot(q, snap => {
+    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // 古い順に並べる
+    users.sort((a, b) => {
+      if (!a.createdAt) return 1;
+      if (!b.createdAt) return -1;
+      return a.createdAt.seconds - b.createdAt.seconds;
+    });
+    renderCards(users);
+  });
+</script>
+</body>
+</html>
